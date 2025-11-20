@@ -1,4 +1,6 @@
-use global_kids;
+use global_kids
+
+
 
 create table ied(
     id_ied int primary key,
@@ -176,3 +178,4 @@ create table detalle_nota(
         on update cascade,
     primary key (id_nota, id_componente)
 );
+

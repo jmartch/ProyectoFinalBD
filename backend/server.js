@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 
+import { swaggerDocs } from './config/swagger.js';  // ⭐ IMPORTAR SWAGGER
 import { initializeDatabase } from './config/db.js';
 // import estudianteRoutes from './routes/estudiante.routes.js';
 // import iedRoutes from './routes/ied.routes.js';
@@ -25,6 +26,8 @@ async function start() {
   await initializeDatabase();
 
   const PORT = process.env.PORT || 3000;
+
+  swaggerDocs(app, PORT);
 
   app.listen(PORT, () => {
     console.log(`🚀 Servidor Global Kids corriendo en puerto ${PORT}`);
@@ -65,6 +68,8 @@ async function start() {
     console.log(`   GET    http://localhost:${PORT}/api/horarios/aula/:idAula`);
     console.log(`   POST   http://localhost:${PORT}/api/horarios`);
     console.log(``);
+
+    
   });
 }
 
