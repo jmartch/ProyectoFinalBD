@@ -27,6 +27,8 @@ export default {
     return { insertId: result.insertId };
   },
 
+  
+
   updateByKeys: async (num_registro, doc_estudiante, { asisto }) => {
     const [result] = await db.query(
       "UPDATE ASISTENCIA SET asisto = ? WHERE num_registro = ? AND doc_estudiante = ?",
