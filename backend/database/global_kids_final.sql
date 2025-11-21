@@ -1,7 +1,5 @@
 use global_kids
 
-
-
 create table ied(
     id_ied int primary key,
     nombre varchar(50) not null,
