@@ -60,7 +60,8 @@ export const createSede = async (req, res) => {
     
     const result = await Sede.create({ 
       id_IED, 
-      direccion: direccion.trim() 
+      direccion: direccion.trim(),
+      tipo 
     });
     
     res.status(201).json({ 
@@ -68,7 +69,8 @@ export const createSede = async (req, res) => {
       data: { 
         id_sede: result.insertId,
         id_IED, 
-        direccion: direccion.trim() 
+        direccion: direccion.trim(),
+        tipo 
       }
     });
   } catch (error) {
@@ -88,7 +90,7 @@ export const createSede = async (req, res) => {
 export const updateSede = async (req, res) => {
   try {
     const { id } = req.params;
-    const { id_IED, direccion } = req.body;
+    const { id_IED, direccion, tipo } = req.body;
     
     // Validar que haya datos para actualizar
     if (!id_IED && !direccion) {

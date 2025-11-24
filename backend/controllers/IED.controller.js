@@ -35,10 +35,10 @@ export const getIEDById = async (req, res) => {
 
 export const createIED = async (req, res) => {
   try {
-    const { nombre, telefono, duracion, hora_inicio, hora_fin } = req.body;
+    const { nombre, telefono, duracion, hora_inicio, hora_fin, jornada } = req.body;
     
     // Validación de campos obligatorios
-    if (!nombre || !duracion || !hora_inicio || !hora_fin) {
+    if (!nombre || !duracion || !hora_inicio || !hora_fin || !jornada) {
       return res.status(400).json({ 
         message: "Faltan campos requeridos: nombre, duracion, hora_inicio, hora_fin" 
       });
@@ -184,7 +184,8 @@ export const updateIED = async (req, res) => {
         telefono, 
         duracion, 
         hora_inicio, 
-        hora_fin 
+        hora_fin,
+        jornada 
       }
     });
   } catch (error) {

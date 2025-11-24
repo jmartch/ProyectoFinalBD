@@ -12,18 +12,18 @@ export default {
     return rows[0];
   },
 
-  create: async ({ nombre, telefono, duracion, hora_inicio, hora_fin }) => {
+  create: async ({ nombre, telefono, duracion, hora_inicio, hora_fin, jornada }) => {
     const [result] = await db.query(
       "INSERT INTO IED (nombre, telefono, duracion, hora_inicio, hora_fin) VALUES (?, ?, ?, ?, ?)",
-      [nombre, telefono, duracion, hora_inicio, hora_fin]
+      [nombre, telefono, duracion, hora_inicio, hora_fin, jornada]
     );
     return { insertId: result.insertId };
   },
 
-  update: async (id, { nombre, telefono, duracion, hora_inicio, hora_fin }) => {
+  update: async (id, { nombre, telefono, duracion, hora_inicio, hora_fin, jornada }) => {
     const [result] = await db.query(
       "UPDATE IED SET nombre=?, telefono=?, duracion=?, hora_inicio=?, hora_fin=? WHERE id_IED=?",
-      [nombre, telefono, duracion, hora_inicio, hora_fin, id]
+      [nombre, telefono, duracion, hora_inicio, hora_fin, jornada, id]
     );
     return result;
   },
