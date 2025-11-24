@@ -19,18 +19,18 @@ export default {
     return rows[0];
   },
 
-  create: async ({ id_nota, id_componente, nota }) => {
+  create: async ({ id_nota, id_componente, valor }) => {
     const [result] = await db.query(
-      "INSERT INTO DETALLE_NOTA (id_nota, id_componente, nota) VALUES (?, ?, ?)",
-      [id_nota, id_componente, nota]
+      "INSERT INTO DETALLE_NOTA (id_nota, id_componente, valor) VALUES (?, ?, ?)",
+      [id_nota, id_componente, valor]
     );
     return { insertId: result.insertId };
   },
 
-  updateByKeys: async (id_nota, id_componente, { nota }) => {
+  updateByKeys: async (id_nota, id_componente, { valor }) => {
     const [result] = await db.query(
-      "UPDATE DETALLE_NOTA SET nota = ? WHERE id_nota = ? AND id_componente = ?",
-      [nota, id_nota, id_componente]
+      "UPDATE DETALLE_NOTA SET valor = ? WHERE id_nota = ? AND id_componente = ?",
+      [valor, id_nota, id_componente]
     );
     return result;
   },

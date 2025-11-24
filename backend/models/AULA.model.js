@@ -7,29 +7,35 @@ export default {
     return rows;
   },
 
-  getById: async (id) => {
-    const [rows] = await db.query("SELECT * FROM AULA WHERE id_aula = ?", [id]);
+  getById: async (id_aula) => {
+    const [rows] = await db.query(
+      "SELECT * FROM AULA WHERE id_aula = ?",
+      [id_aula]
+    );
     return rows[0];
   },
 
-  create: async ({ id_sede, grado, programa }) => {
+  create: async ({ id_sede, id_programa, grado }) => {
     const [result] = await db.query(
-      "INSERT INTO AULA (id_sede, grado, programa) VALUES (?, ?, ?)",
-      [id_sede, grado, programa]
+      "INSERT INTO AULA (id_sede, id_programa, grado) VALUES (?, ?, ?)",
+      [id_sede, id_programa, grado]
     );
     return { insertId: result.insertId };
   },
 
-  update: async (id, { id_sede, grado, programa }) => {
+  update: async (id_aula, { id_sede, id_programa, grado }) => {
     const [result] = await db.query(
-      "UPDATE AULA SET id_sede = ?, grado = ?, programa = ? WHERE id_aula = ?",
-      [id_sede, grado, programa, id]
+      "UPDATE AULA SET id_sede=?, id_programa=?, grado=? WHERE id_aula=?",
+      [id_sede, id_programa, grado, id_aula]
     );
     return result;
   },
 
-  remove: async (id) => {
-    const [result] = await db.query("DELETE FROM AULA WHERE id_aula = ?", [id]);
+  remove: async (id_aula) => {
+    const [result] = await db.query(
+      "DELETE FROM AULA WHERE id_aula=?",
+      [id_aula]
+    );
     return result;
   }
 };

@@ -8,33 +8,35 @@ export default {
   },
 
   getById: async (usuario) => {
-    const [rows] = await db.query("SELECT * FROM USUARIO WHERE usuario = ?", [usuario]);
+    const [rows] = await db.query(
+      "SELECT * FROM USUARIO WHERE usuario=?",
+      [usuario]
+    );
     return rows[0];
   },
 
-  create: async ({ usuario, id_funcionario, contraseña, rol }) => {
+  create: async ({ usuario, doc_funcionario, contraseña, rol }) => {
     const [result] = await db.query(
-      "INSERT INTO USUARIO (usuario, id_funcionario, contraseña, rol) VALUES (?, ?, ?, ?)",
-      [usuario, id_funcionario, contraseña, rol]
+      "INSERT INTO USUARIO (usuario, doc_funcionario, contraseña, rol) VALUES (?, ?, ?, ?)",
+      [usuario, doc_funcionario, contraseña, rol]
     );
-    return { insertId: result.insertId };
+    return result;
   },
 
   update: async (usuario, data) => {
-    const fields = [];
-    const values = [];
-    for (const [k, v] of Object.entries(data)) {
-      fields.push(`${k} = ?`);
-      values.push(v);
-    }
-    values.push(usuario);
-    const sql = `UPDATE USUARIO SET ${fields.join(", ")} WHERE usuario = ?`;
-    const [result] = await db.query(sql, values);
+    const { doc_funcionario, contraseña, rol } = data;
+    const [result] = await db.query(
+      "UPDATE USUARIO SET doc_funcionario=?, contraseña=?, rol=? WHERE usuario=?",
+      [doc_funcionario, contraseña, rol, usuario]
+    );
     return result;
   },
 
   remove: async (usuario) => {
-    const [result] = await db.query("DELETE FROM USUARIO WHERE usuario = ?", [usuario]);
+    const [result] = await db.query(
+      "DELETE FROM USUARIO WHERE usuario=?",
+      [usuario]
+    );
     return result;
   }
 };

@@ -7,36 +7,84 @@ export default {
     return rows;
   },
 
-  getById: async (doc) => {
-    const [rows] = await db.query("SELECT * FROM ESTUDIANTE WHERE doc_estudiante = ?", [doc]);
+  getById: async (doc_estudiante) => {
+    const [rows] = await db.query(
+      "SELECT * FROM ESTUDIANTE WHERE doc_estudiante=?",
+      [doc_estudiante]
+    );
     return rows[0];
   },
 
-  create: async ({ doc_estudiante, tipo_doc, nombre1, nombre2, apellido1, apellido2, correo_acudiente, telefono_acudiente, sexo }) => {
+  create: async (data) => {
+    const {
+      doc_estudiante,
+      tipo_doc,
+      nombre1,
+      nombre2,
+      apellido1,
+      apellido2,
+      sexo,
+      correo_acudiente,
+      telefono_acudiente
+    } = data;
+
     const [result] = await db.query(
       `INSERT INTO ESTUDIANTE 
-       (doc_estudiante, tipo_doc, nombre1, nombre2, apellido1, apellido2, correo_acudiente, telefono_acudiente, sexo)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [doc_estudiante, tipo_doc, nombre1, nombre2, apellido1, apellido2, correo_acudiente, telefono_acudiente, sexo]
+      (doc_estudiante, tipo_doc, nombre1, nombre2, apellido1, apellido2, sexo, correo_acudiente, telefono_acudiente)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        doc_estudiante,
+        tipo_doc,
+        nombre1,
+        nombre2,
+        apellido1,
+        apellido2,
+        sexo,
+        correo_acudiente,
+        telefono_acudiente
+      ]
     );
-    return { insertId: result.insertId };
-  },
 
-  update: async (doc, data) => {
-    const fields = [];
-    const values = [];
-    for (const [k, v] of Object.entries(data)) {
-      fields.push(`${k} = ?`);
-      values.push(v);
-    }
-    values.push(doc);
-    const sql = `UPDATE ESTUDIANTE SET ${fields.join(", ")} WHERE doc_estudiante = ?`;
-    const [result] = await db.query(sql, values);
     return result;
   },
 
-  remove: async (doc) => {
-    const [result] = await db.query("DELETE FROM ESTUDIANTE WHERE doc_estudiante = ?", [doc]);
+  update: async (doc_estudiante, data) => {
+    const {
+      tipo_doc,
+      nombre1,
+      nombre2,
+      apellido1,
+      apellido2,
+      sexo,
+      correo_acudiente,
+      telefono_acudiente
+    } = data;
+
+    const [result] = await db.query(
+      `UPDATE ESTUDIANTE SET 
+      tipo_doc=?, nombre1=?, nombre2=?, apellido1=?, apellido2=?, sexo=?, correo_acudiente=?, telefono_acudiente=?
+      WHERE doc_estudiante=?`,
+      [
+        tipo_doc,
+        nombre1,
+        nombre2,
+        apellido1,
+        apellido2,
+        sexo,
+        correo_acudiente,
+        telefono_acudiente,
+        doc_estudiante
+      ]
+    );
+
+    return result;
+  },
+
+  remove: async (doc_estudiante) => {
+    const [result] = await db.query(
+      "DELETE FROM ESTUDIANTE WHERE doc_estudiante=?",
+      [doc_estudiante]
+    );
     return result;
   }
 };

@@ -3,39 +3,84 @@ import db from "../config/db.js";
 
 export default {
   getAll: async () => {
-    const [rows] = await db.query("SELECT * FROM REGISTRO_CLASES");
+    const [rows] = await db.query("SELECT * FROM registro_clases");
     return rows;
   },
 
-  getById: async (num) => {
-    const [rows] = await db.query("SELECT * FROM REGISTRO_CLASES WHERE num_registro = ?", [num]);
+  getById: async (num_registro) => {
+    const [rows] = await db.query(
+      "SELECT * FROM registro_clases WHERE num_registro = ?",
+      [num_registro]
+    );
     return rows[0];
   },
 
-  create: async ({ id_aula, codigo, fecha, is_festivo, dictada, fecha_reposicion }) => {
+  create: async ({
+    numero_semana,
+    id_aula,
+    codigo_motivo,
+    fecha,
+    dictada,
+    is_festivo,
+    fecha_reposicion
+  }) => {
     const [result] = await db.query(
-      `INSERT INTO REGISTRO_CLASES (id_aula, codigo, fecha, is_festivo, dictada, fecha_reposicion)
-       VALUES (?, ?, ?, ?, ?, ?)`,
-      [id_aula, codigo, fecha, is_festivo, dictada, fecha_reposicion]
+      `INSERT INTO registro_clases 
+       (numero_semana, id_aula, codigo_motivo, fecha, dictada, is_festivo, fecha_reposicion)
+       VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      [
+        numero_semana,
+        id_aula,
+        codigo_motivo,
+        fecha,
+        dictada,
+        is_festivo,
+        fecha_reposicion
+      ]
     );
     return { insertId: result.insertId };
   },
 
-  update: async (num, data) => {
-    const fields = [];
-    const values = [];
-    for (const [k, v] of Object.entries(data)) {
-      fields.push(`${k} = ?`);
-      values.push(v);
-    }
-    values.push(num);
-    const sql = `UPDATE REGISTRO_CLASES SET ${fields.join(", ")} WHERE num_registro = ?`;
-    const [result] = await db.query(sql, values);
+  updateById: async (num_registro, data) => {
+    const {
+      numero_semana,
+      id_aula,
+      codigo_motivo,
+      fecha,
+      dictada,
+      is_festivo,
+      fecha_reposicion
+    } = data;
+
+    const [result] = await db.query(
+      `UPDATE registro_clases SET 
+        numero_semana = ?, 
+        id_aula = ?, 
+        codigo_motivo = ?, 
+        fecha = ?, 
+        dictada = ?, 
+        is_festivo = ?, 
+        fecha_reposicion = ?
+       WHERE num_registro = ?`,
+      [
+        numero_semana,
+        id_aula,
+        codigo_motivo,
+        fecha,
+        dictada,
+        is_festivo,
+        fecha_reposicion,
+        num_registro
+      ]
+    );
     return result;
   },
 
-  remove: async (num) => {
-    const [result] = await db.query("DELETE FROM REGISTRO_CLASES WHERE num_registro = ?", [num]);
+  removeById: async (num_registro) => {
+    const [result] = await db.query(
+      "DELETE FROM registro_clases WHERE num_registro = ?",
+      [num_registro]
+    );
     return result;
   }
 };

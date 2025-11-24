@@ -2,7 +2,7 @@
 import db from "../config/db.js";
 
 /*
-NOTA: PK id_nota, FK doc_estudiante
+PK: id_nota
 */
 
 export default {
@@ -11,29 +11,35 @@ export default {
     return rows;
   },
 
-  getById: async (id) => {
-    const [rows] = await db.query("SELECT * FROM NOTA WHERE id_nota = ?", [id]);
+  getById: async (id_nota) => {
+    const [rows] = await db.query(
+      "SELECT * FROM NOTA WHERE id_nota = ?",
+      [id_nota]
+    );
     return rows[0];
   },
 
-  create: async ({ doc_estudiante, definitiva }) => {
+  create: async ({ id_nota, doc_estudiante, id_periodo, definitiva }) => {
     const [result] = await db.query(
-      "INSERT INTO NOTA (doc_estudiante, definitiva) VALUES (?, ?)",
-      [doc_estudiante, definitiva]
+      "INSERT INTO NOTA (id_nota, doc_estudiante, id_periodo, definitiva) VALUES (?, ?, ?, ?)",
+      [id_nota, doc_estudiante, id_periodo, definitiva]
     );
     return { insertId: result.insertId };
   },
 
-  update: async (id, { doc_estudiante, definitiva }) => {
+  updateById: async (id_nota, { doc_estudiante, id_periodo, definitiva }) => {
     const [result] = await db.query(
-      "UPDATE NOTA SET doc_estudiante = ?, definitiva = ? WHERE id_nota = ?",
-      [doc_estudiante, definitiva, id]
+      "UPDATE NOTA SET doc_estudiante = ?, id_periodo = ?, definitiva = ? WHERE id_nota = ?",
+      [doc_estudiante, id_periodo, definitiva, id_nota]
     );
     return result;
   },
 
-  remove: async (id) => {
-    const [result] = await db.query("DELETE FROM NOTA WHERE id_nota = ?", [id]);
+  removeById: async (id_nota) => {
+    const [result] = await db.query(
+      "DELETE FROM NOTA WHERE id_nota = ?",
+      [id_nota]
+    );
     return result;
   }
 };
