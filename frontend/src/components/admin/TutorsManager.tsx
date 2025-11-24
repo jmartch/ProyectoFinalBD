@@ -3,8 +3,21 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '../ui/dialog';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '../ui/select';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '../ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
 import { Badge } from '../ui/badge';
 import { persons, tutorAssignments, aulas, documentTypes } from '../../lib/mockData';
@@ -14,13 +27,13 @@ import { UserRole } from '../../types';
 export function TutorsManager() {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
 
-  const tutors = persons.filter(p => p.role === UserRole.TUTOR);
+  const tutors = persons.filter((p) => p.role === UserRole.TUTOR);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 max-w-6xl mx-auto">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl">Gestión de Tutores</h2>
+          <h2 className="text-2xl font-semibold">Gestión de Tutores</h2>
           <p className="text-gray-600 mt-1">
             Administrar tutores y personal del programa
           </p>
@@ -32,18 +45,21 @@ export function TutorsManager() {
               Nuevo Tutor
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-2xl">
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Contratar Nuevo Personal</DialogTitle>
               <DialogDescription>
                 Ingrese la información de la persona a contratar
               </DialogDescription>
             </DialogHeader>
-            <form className="space-y-4" onSubmit={(e) => {
-              e.preventDefault();
-              setIsAddDialogOpen(false);
-            }}>
-              <div className="grid grid-cols-2 gap-4">
+            <form
+              className="space-y-4"
+              onSubmit={(e) => {
+                e.preventDefault();
+                setIsAddDialogOpen(false);
+              }}
+            >
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="firstName">Nombres</Label>
                   <Input id="firstName" placeholder="María" required />
@@ -54,15 +70,15 @@ export function TutorsManager() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="docType">Tipo de Documento</Label>
                   <Select>
-                    <SelectTrigger>
+                    <SelectTrigger className="w-full">
                       <SelectValue placeholder="Seleccione tipo" />
                     </SelectTrigger>
-                    <SelectContent>
-                      {documentTypes.map(dt => (
+                    <SelectContent className="(--radix-select-trigger-width) rounded-lg border border-slate-200 bg-white shadow-lg">
+                      {documentTypes.map((dt) => (
                         <SelectItem key={dt.id} value={dt.id}>
                           {dt.name}
                         </SelectItem>
@@ -76,10 +92,15 @@ export function TutorsManager() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="email">Email</Label>
-                  <Input id="email" type="email" placeholder="tutor@globalenglish.edu" required />
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder="tutor@globalenglish.edu"
+                    required
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="phone">Teléfono</Label>
@@ -87,14 +108,14 @@ export function TutorsManager() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="role">Rol/Perfil</Label>
                   <Select>
-                    <SelectTrigger>
+                    <SelectTrigger className="w-full">
                       <SelectValue placeholder="Seleccione rol" />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="(--radix-select-trigger-width) rounded-lg border border-slate-200 bg-white shadow-lg">
                       <SelectItem value="TUTOR">Tutor</SelectItem>
                       <SelectItem value="ADMINISTRATIVO">Administrativo</SelectItem>
                     </SelectContent>
@@ -107,7 +128,11 @@ export function TutorsManager() {
               </div>
 
               <div className="flex justify-end gap-2 pt-4">
-                <Button type="button" variant="outline" onClick={() => setIsAddDialogOpen(false)}>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setIsAddDialogOpen(false)}
+                >
                   Cancelar
                 </Button>
                 <Button type="submit">Contratar Personal</Button>
@@ -139,9 +164,13 @@ export function TutorsManager() {
             </TableHeader>
             <TableBody>
               {tutors.map((tutor) => {
-                const docType = documentTypes.find(dt => dt.id === tutor.documentTypeId);
-                const assignments = tutorAssignments.filter(ta => ta.tutorId === tutor.id && ta.isActive);
-                
+                const docType = documentTypes.find(
+                  (dt) => dt.id === tutor.documentTypeId,
+                );
+                const assignments = tutorAssignments.filter(
+                  (ta) => ta.tutorId === tutor.id && ta.isActive,
+                );
+
                 return (
                   <TableRow key={tutor.id}>
                     <TableCell>
@@ -167,7 +196,9 @@ export function TutorsManager() {
                       </Badge>
                     </TableCell>
                     <TableCell>
-                      <Button size="sm" variant="ghost">Ver</Button>
+                      <Button size="sm" variant="ghost">
+                        Ver
+                      </Button>
                     </TableCell>
                   </TableRow>
                 );
@@ -190,22 +221,28 @@ export function TutorsManager() {
           <CardTitle>Resumen de Personal</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="text-center p-4 bg-blue-50 rounded-lg">
               <div className="text-2xl">
-                {persons.filter(p => p.role === UserRole.TUTOR && p.isActive).length}
+                {persons.filter(
+                  (p) => p.role === UserRole.TUTOR && p.isActive,
+                ).length}
               </div>
               <p className="text-sm text-gray-600 mt-1">Tutores Activos</p>
             </div>
             <div className="text-center p-4 bg-green-50 rounded-lg">
               <div className="text-2xl">
-                {persons.filter(p => p.role === UserRole.ADMINISTRATIVO && p.isActive).length}
+                {persons.filter(
+                  (p) => p.role === UserRole.ADMINISTRATIVO && p.isActive,
+                ).length}
               </div>
               <p className="text-sm text-gray-600 mt-1">Administrativos</p>
             </div>
             <div className="text-center p-4 bg-purple-50 rounded-lg">
               <div className="text-2xl">
-                {persons.filter(p => p.role === UserRole.ADMINISTRADOR && p.isActive).length}
+                {persons.filter(
+                  (p) => p.role === UserRole.ADMINISTRADOR && p.isActive,
+                ).length}
               </div>
               <p className="text-sm text-gray-600 mt-1">Administradores</p>
             </div>

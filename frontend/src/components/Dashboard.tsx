@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import { 
   Users, BookOpen, Calendar, ClipboardList, GraduationCap, 
-  School, Settings, FileText, LogOut, BarChart3, UserCog
+  School, Settings, FileText, LogOut, BarChart3, UserCog, Calendar as CalendarIcon
 } from 'lucide-react';
 import { InstitutionsManager } from './admin/InstitutionsManager';
 import { AulasManager } from './admin/AulasManager';
@@ -16,6 +16,7 @@ import { GradesManager } from './tutor/GradesManager';
 import { ReportsManager } from './reports/ReportsManager';
 import { SystemSettings } from './admin/SystemSettings';
 import { TutorDashboard } from './tutor/TutorDashboard';
+import { ScheduleCalendar } from './tutor/ScheduleCalendar';
 import { aulas, tutorAssignments } from '../lib/mockData';
 import { ProgramType } from '../types';
 import { Badge } from './ui/badge';
@@ -54,7 +55,7 @@ export function Dashboard({ authUser }: DashboardProps) {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl bg-gradient-to-r from-blue-600 to-indigo-600 text-transparent bg-clip-text">
+              <h1 className="text-2xl bg-lineal-to-r from-blue-600 to-indigo-600 text-transparent bg-clip-text">
                 GLOBALENGLISH
               </h1>
               <div className="flex items-center gap-2 mt-1">
@@ -129,6 +130,10 @@ export function Dashboard({ authUser }: DashboardProps) {
               <ClipboardList className="w-4 h-4 mr-2" />
               Calificaciones
             </TabsTrigger>
+            <TabsTrigger value="calendar">
+              <CalendarIcon className="w-4 h-4 mr-2" />
+              Calendario
+            </TabsTrigger>
             <TabsTrigger value="reports">
               <FileText className="w-4 h-4 mr-2" />
               Reportes
@@ -172,6 +177,10 @@ export function Dashboard({ authUser }: DashboardProps) {
 
           <TabsContent value="grades">
             <GradesManager authUser={authUser} />
+          </TabsContent>
+
+          <TabsContent value="calendar">
+            <ScheduleCalendar authUser={authUser} />
           </TabsContent>
 
           <TabsContent value="reports">

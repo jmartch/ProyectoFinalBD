@@ -3,11 +3,30 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '../ui/dialog';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '../ui/select';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '../ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
 import { Badge } from '../ui/badge';
-import { students, institutions, studentAulaAssignments, aulas, documentTypes } from '../../lib/mockData';
+import {
+  students,
+  institutions,
+  studentAulaAssignments,
+  aulas,
+  documentTypes,
+} from '../../lib/mockData';
 import { Plus, GraduationCap, MoveRight } from 'lucide-react';
 import { Grade } from '../../types';
 
@@ -20,17 +39,17 @@ export function StudentsManager() {
 
   let filteredStudents = students;
   if (filterInstitution !== 'all') {
-    filteredStudents = filteredStudents.filter(s => s.institutionId === filterInstitution);
+    filteredStudents = filteredStudents.filter((s) => s.institutionId === filterInstitution);
   }
   if (filterGrade !== 'all') {
-    filteredStudents = filteredStudents.filter(s => s.grade === filterGrade);
+    filteredStudents = filteredStudents.filter((s) => s.grade === filterGrade);
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 max-w-6xl mx-auto">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl">Gestión de Estudiantes</h2>
+          <h2 className="text-2xl font-semibold">Gestión de Estudiantes</h2>
           <p className="text-gray-600 mt-1">
             Administrar estudiantes del programa GLOBALENGLISH
           </p>
@@ -42,18 +61,19 @@ export function StudentsManager() {
               Nuevo Estudiante
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-2xl">
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Registrar Nuevo Estudiante</DialogTitle>
-              <DialogDescription>
-                Ingrese la información del estudiante
-              </DialogDescription>
+              <DialogDescription>Ingrese la información del estudiante</DialogDescription>
             </DialogHeader>
-            <form className="space-y-4" onSubmit={(e) => {
-              e.preventDefault();
-              setIsAddDialogOpen(false);
-            }}>
-              <div className="grid grid-cols-2 gap-4">
+            <form
+              className="space-y-4"
+              onSubmit={(e) => {
+                e.preventDefault();
+                setIsAddDialogOpen(false);
+              }}
+            >
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="firstName">Nombres</Label>
                   <Input id="firstName" placeholder="Juan" required />
@@ -64,15 +84,15 @@ export function StudentsManager() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="docType">Tipo de Documento</Label>
                   <Select>
-                    <SelectTrigger>
+                    <SelectTrigger className="w-full">
                       <SelectValue placeholder="Seleccione tipo" />
                     </SelectTrigger>
-                    <SelectContent>
-                      {documentTypes.map(dt => (
+                    <SelectContent className="(--radix-select-trigger-width) rounded-lg border border-slate-200 bg-white shadow-lg">
+                      {documentTypes.map((dt) => (
                         <SelectItem key={dt.id} value={dt.id}>
                           {dt.name}
                         </SelectItem>
@@ -86,15 +106,15 @@ export function StudentsManager() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="institution">Institución</Label>
                   <Select>
-                    <SelectTrigger>
+                    <SelectTrigger className="w-full">
                       <SelectValue placeholder="Seleccione institución" />
                     </SelectTrigger>
-                    <SelectContent>
-                      {institutions.map(inst => (
+                    <SelectContent className="(--radix-select-trigger-width) rounded-lg border border-slate-200 bg-white shadow-lg">
+                      {institutions.map((inst) => (
                         <SelectItem key={inst.id} value={inst.id}>
                           {inst.name}
                         </SelectItem>
@@ -105,10 +125,10 @@ export function StudentsManager() {
                 <div className="space-y-2">
                   <Label htmlFor="grade">Grado</Label>
                   <Select>
-                    <SelectTrigger>
+                    <SelectTrigger className="w-full">
                       <SelectValue placeholder="Seleccione grado" />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="(--radix-select-trigger-width) rounded-lg border border-slate-200 bg-white shadow-lg">
                       <SelectItem value="4">4º Grado</SelectItem>
                       <SelectItem value="5">5º Grado</SelectItem>
                       <SelectItem value="9">9º Grado</SelectItem>
@@ -118,15 +138,15 @@ export function StudentsManager() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="aula">Aula</Label>
                   <Select>
-                    <SelectTrigger>
+                    <SelectTrigger className="w-full">
                       <SelectValue placeholder="Seleccione aula" />
                     </SelectTrigger>
-                    <SelectContent>
-                      {aulas.map(aula => (
+                    <SelectContent className="(--radix-select-trigger-width) rounded-lg border border-slate-200 bg-white shadow-lg">
+                      {aulas.map((aula) => (
                         <SelectItem key={aula.id} value={aula.id}>
                           {aula.code}
                         </SelectItem>
@@ -141,7 +161,11 @@ export function StudentsManager() {
               </div>
 
               <div className="flex justify-end gap-2 pt-4">
-                <Button type="button" variant="outline" onClick={() => setIsAddDialogOpen(false)}>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setIsAddDialogOpen(false)}
+                >
                   Cancelar
                 </Button>
                 <Button type="submit">Guardar Estudiante</Button>
@@ -157,16 +181,16 @@ export function StudentsManager() {
           <CardTitle>Filtros</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
               <Label htmlFor="filter-institution">Institución</Label>
               <Select value={filterInstitution} onValueChange={setFilterInstitution}>
-                <SelectTrigger id="filter-institution">
-                  <SelectValue />
+                <SelectTrigger id="filter-institution" className="w-full">
+                  <SelectValue placeholder="Todas las instituciones" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="(--radix-select-trigger-width) rounded-lg border border-slate-200 bg-white shadow-lg">
                   <SelectItem value="all">Todas las instituciones</SelectItem>
-                  {institutions.map(inst => (
+                  {institutions.map((inst) => (
                     <SelectItem key={inst.id} value={inst.id}>
                       {inst.name}
                     </SelectItem>
@@ -174,13 +198,13 @@ export function StudentsManager() {
                 </SelectContent>
               </Select>
             </div>
-            <div>
+            <div className="space-y-2">
               <Label htmlFor="filter-grade">Grado</Label>
               <Select value={filterGrade} onValueChange={setFilterGrade}>
-                <SelectTrigger id="filter-grade">
-                  <SelectValue />
+                <SelectTrigger id="filter-grade" className="w-full">
+                  <SelectValue placeholder="Todos los grados" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="(--radix-select-trigger-width) rounded-lg border border-slate-200 bg-white shadow-lg">
                   <SelectItem value="all">Todos los grados</SelectItem>
                   <SelectItem value="4">4º Grado</SelectItem>
                   <SelectItem value="5">5º Grado</SelectItem>
@@ -197,7 +221,9 @@ export function StudentsManager() {
       <Card>
         <CardHeader>
           <CardTitle>Estudiantes Registrados</CardTitle>
-          <CardDescription>{filteredStudents.length} estudiantes encontrados</CardDescription>
+          <CardDescription>
+            {filteredStudents.length} estudiantes encontrados
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <Table>
@@ -216,10 +242,12 @@ export function StudentsManager() {
             </TableHeader>
             <TableBody>
               {filteredStudents.map((student) => {
-                const institution = institutions.find(i => i.id === student.institutionId);
-                const docType = documentTypes.find(dt => dt.id === student.documentTypeId);
-                const assignment = studentAulaAssignments.find(sa => sa.studentId === student.id && sa.isActive);
-                const aula = assignment ? aulas.find(a => a.id === assignment.aulaId) : null;
+                const institution = institutions.find((i) => i.id === student.institutionId);
+                const docType = documentTypes.find((dt) => dt.id === student.documentTypeId);
+                const assignment = studentAulaAssignments.find(
+                  (sa) => sa.studentId === student.id && sa.isActive,
+                );
+                const aula = assignment ? aulas.find((a) => a.id === assignment.aulaId) : null;
 
                 return (
                   <TableRow key={student.id}>
@@ -240,8 +268,8 @@ export function StudentsManager() {
                     <TableCell>{student.exitScore || '-'}</TableCell>
                     <TableCell>
                       <div className="flex gap-2">
-                        <Button 
-                          size="sm" 
+                        <Button
+                          size="sm"
                           variant="ghost"
                           onClick={() => {
                             setSelectedStudent(student.id);
@@ -269,26 +297,30 @@ export function StudentsManager() {
 
       {/* Move Student Dialog */}
       <Dialog open={isMoveDialogOpen} onOpenChange={setIsMoveDialogOpen}>
-        <DialogContent>
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Mover Estudiante de Aula</DialogTitle>
             <DialogDescription>
-              Seleccione el aula destino. El estudiante solo puede moverse entre aulas del mismo nivel.
+              Seleccione el aula destino. El estudiante solo puede moverse entre aulas del mismo
+              nivel.
             </DialogDescription>
           </DialogHeader>
-          <form className="space-y-4" onSubmit={(e) => {
-            e.preventDefault();
-            setIsMoveDialogOpen(false);
-            setSelectedStudent(null);
-          }}>
+          <form
+            className="space-y-4"
+            onSubmit={(e) => {
+              e.preventDefault();
+              setIsMoveDialogOpen(false);
+              setSelectedStudent(null);
+            }}
+          >
             <div className="space-y-2">
               <Label htmlFor="targetAula">Aula Destino</Label>
               <Select>
-                <SelectTrigger>
+                <SelectTrigger className="w-full">
                   <SelectValue placeholder="Seleccione aula" />
                 </SelectTrigger>
-                <SelectContent>
-                  {aulas.map(aula => (
+                <SelectContent className="(--radix-select-trigger-width) rounded-lg border border-slate-200 bg-white shadow-lg">
+                  {aulas.map((aula) => (
                     <SelectItem key={aula.id} value={aula.id}>
                       {aula.code} - Grado {aula.grade}
                     </SelectItem>
@@ -299,14 +331,21 @@ export function StudentsManager() {
 
             <div className="space-y-2">
               <Label htmlFor="reason">Motivo del Cambio</Label>
-              <Input id="reason" placeholder="Ej: Cambio de horario, Nivel inadecuado, etc." />
+              <Input
+                id="reason"
+                placeholder="Ej: Cambio de horario, Nivel inadecuado, etc."
+              />
             </div>
 
             <div className="flex justify-end gap-2 pt-4">
-              <Button type="button" variant="outline" onClick={() => {
-                setIsMoveDialogOpen(false);
-                setSelectedStudent(null);
-              }}>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  setIsMoveDialogOpen(false);
+                  setSelectedStudent(null);
+                }}
+              >
                 Cancelar
               </Button>
               <Button type="submit">Mover Estudiante</Button>
