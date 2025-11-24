@@ -11,6 +11,7 @@ const DialogTrigger = DialogPrimitive.Trigger;
 const DialogPortal = DialogPrimitive.Portal;
 const DialogClose = DialogPrimitive.Close;
 
+// Dejamos definido el overlay, pero completamente transparente por si lo quieres reutilizar
 const DialogOverlay = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Overlay>,
   React.ComponentPropsWithoutRef<typeof DialogPrimitive.Overlay>
@@ -18,9 +19,7 @@ const DialogOverlay = React.forwardRef<
   <DialogPrimitive.Overlay
     ref={ref}
     className={cn(
-      "fixed inset-0 z-50 bg-black/40 backdrop-blur-sm " +
-        "data-[state=open]:animate-in data-[state=closed]:animate-out " +
-        "data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
+      "fixed inset-0 z-40 bg-transparent",
       className,
     )}
     {...props}
@@ -33,17 +32,16 @@ const DialogContent = React.forwardRef<
   React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content>
 >(({ className, children, ...props }, ref) => (
   <DialogPortal>
-    <DialogOverlay />
+    {/* 👉 Si NO quieres overlay en absoluto, deja comentada esta línea */}
+    {/* <DialogOverlay /> */}
     <DialogPrimitive.Content
       ref={ref}
       className={cn(
-        // aquí se centra y se limita el tamaño 👇
-        "fixed left-1/2 top-1/2 z-50 grid w-full max-w-lg " +
-          "-translate-x-1/2 -translate-y-1/2 gap-4 border bg-background p-6 " +
-          "shadow-lg duration-200 sm:rounded-lg " +
-          "data-[state=open]:animate-in data-[state=closed]:animate-out " +
-          "data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 " +
-          "data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95",
+        "fixed left-1/2 top-1/2 z-50 grid w-full max-w-2xl",
+        "-translate-x-1/2 -translate-y-1/2 gap-4",
+        "rounded-xl border border-gray-200 bg-white",
+        "p-6 shadow-2xl outline-none",
+        "max-h-[90vh] overflow-y-auto",
         className,
       )}
       {...props}
