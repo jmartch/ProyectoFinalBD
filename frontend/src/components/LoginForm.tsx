@@ -1,5 +1,6 @@
 
 import { useState } from "react";
+import logo from "../assets/logo.png";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
@@ -44,6 +45,9 @@ export function LoginForm({ onLogin }: LoginFormProps) {
           // To use an image instead of gradient:
           // style={{ backgroundImage: "url('/yourImageHere.jpg')" }}
         >
+          <div className="flex-1 flex items-center justify-center">
+            <img src={logo} alt="Logo" className="h-72 lg:h-96 w-auto object-contain" />
+          </div>
         </div>
 
         {/* RIGHT PANEL (narrower, centered vertically) */}

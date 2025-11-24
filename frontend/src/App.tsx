@@ -4,6 +4,8 @@ import { LoginForm } from './components/LoginForm';
 import { Dashboard } from './components/Dashboard';
 import { getCurrentUser, AuthUser } from './lib/auth';
 
+
+
 export default function App() {
   const [authUser, setAuthUser] = useState<AuthUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
