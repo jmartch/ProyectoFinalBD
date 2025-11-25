@@ -1,6 +1,6 @@
 // routes/REGISTRO_TUTORES.routes.js
 import { Router } from "express";
-import * as registroTutoresController from "../controllers/REGISTRO_TUTORES.controller.js";
+import * as registroTutoresController from "../controllers/REGISTRO_TUTOR.controller.js";
 
 const router = Router();
 

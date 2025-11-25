@@ -1,5 +1,5 @@
 // controllers/REGISTRO_TUTORES.controller.js
-import RegistroTutores from "../models/REGISTRO_TUTORES.model.js";
+import RegistroTutores from "../models/REGISTRO_TUTOR.model.js";
 
 export const getAllRegistrosTutores = async (req, res) => {
   try {
