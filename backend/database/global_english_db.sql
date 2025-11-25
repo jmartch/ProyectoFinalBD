@@ -1,4 +1,4 @@
--- Active: 1763606210735@@127.0.0.1@3306@global_english
+-- Active: 1763606210735@@127.0.0.1@3306@global_english_db
 use global_english_db;
 
 create table ied(
@@ -102,15 +102,18 @@ create table registro_tutores(
     primary key (doc_funcionario, id_tutor)
 );
 
+
 create table usuario(
     usuario varchar(50) primary key,
     doc_funcionario int unique,
-    contraseña varchar(50) not null,
+    contraseña varchar(500) not null,
     rol varchar(50) not null,
     foreign key (doc_funcionario) references funcionario(doc_funcionario)
         on delete cascade
         on update cascade
 );
+
+DROP TABLE IF EXISTS usuario;
 
 create table matricula(
     id_ied int,
