@@ -1,6 +1,6 @@
 // routes/REGISTRO_CLASES.routes.js
 import { Router } from "express";
-import * as registroClasesController from "../controllers/REGISTRO_CLASES.controller.js";
+import * as registroClasesController from "../controllers/REGISTRO_CLASE.controller.js";
 
 const router = Router();
 
