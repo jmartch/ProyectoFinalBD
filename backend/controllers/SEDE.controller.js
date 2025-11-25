@@ -35,12 +35,12 @@ export const getSedeById = async (req, res) => {
 
 export const createSede = async (req, res) => {
   try {
-    const { id_IED, direccion } = req.body;
+    const { id_IED, direccion, tipo } = req.body;
     
     // Validación de campos obligatorios
-    if (!id_IED || !direccion) {
+    if (!id_IED || !direccion || !tipo) {
       return res.status(400).json({ 
-        message: "Faltan campos requeridos: id_IED, direccion" 
+        message: "Faltan campos requeridos: id_IED, direccion, tipo" 
       });
     }
 
@@ -55,6 +55,13 @@ export const createSede = async (req, res) => {
     if (direccion.trim().length === 0) {
       return res.status(400).json({ 
         message: "La dirección no puede estar vacía o contener solo espacios" 
+      });
+    }
+
+    //Validación de longitud de tipo
+    if (tipo.length > 50) {
+      return res.status(400).json({ 
+        message: "El tipo no puede exceder 50 caracteres" 
       });
     }
     
@@ -93,9 +100,9 @@ export const updateSede = async (req, res) => {
     const { id_IED, direccion, tipo } = req.body;
     
     // Validar que haya datos para actualizar
-    if (!id_IED && !direccion) {
+    if (!id_IED && !direccion && !tipo) {
       return res.status(400).json({ 
-        message: "Debe proporcionar al menos un campo para actualizar (id_IED, direccion)" 
+        message: "Debe proporcionar al menos un campo para actualizar (id_IED, direccion, tipo)" 
       });
     }
 
@@ -113,6 +120,14 @@ export const updateSede = async (req, res) => {
           message: "La dirección no puede estar vacía o contener solo espacios" 
         });
       }
+
+      //Validación de longitud de tipo
+      if (tipo.length > 50) {
+        return res.status(400).json({ 
+          message: "El tipo no puede exceder 50 caracteres" 
+        });
+      }
+      
     }
 
     // Obtener sede actual para mantener valores no actualizados

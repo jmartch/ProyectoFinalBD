@@ -40,7 +40,7 @@ export const createIED = async (req, res) => {
     // Validación de campos obligatorios
     if (!nombre || !duracion || !hora_inicio || !hora_fin || !jornada) {
       return res.status(400).json({ 
-        message: "Faltan campos requeridos: nombre, duracion, hora_inicio, hora_fin" 
+        message: "Faltan campos requeridos: nombre, duracion, hora_inicio, hora_fin, jornada" 
       });
     }
 
@@ -86,8 +86,15 @@ export const createIED = async (req, res) => {
         message: "La hora_fin debe ser posterior a la hora_inicio" 
       });
     }
+
+    //Validación de longitud de jornada
+    if (jornada.length > 50) {
+      return res.status(400).json({ 
+        message: "La jornada no puede exceder 50 caracteres" 
+      });
+    }
     
-    const result = await IED.create({ nombre, telefono, duracion, hora_inicio, hora_fin });
+    const result = await IED.create({ nombre, telefono, duracion, hora_inicio, hora_fin, jornada });
     res.status(201).json({ 
       message: "IED creada exitosamente",
       data: { 
@@ -96,7 +103,8 @@ export const createIED = async (req, res) => {
         telefono, 
         duracion, 
         hora_inicio, 
-        hora_fin 
+        hora_fin,
+        jornada
       }
     });
   } catch (error) {
@@ -116,12 +124,12 @@ export const createIED = async (req, res) => {
 export const updateIED = async (req, res) => {
   try {
     const { id } = req.params;
-    const { nombre, telefono, duracion, hora_inicio, hora_fin } = req.body;
+    const { nombre, telefono, duracion, hora_inicio, hora_fin, jornada } = req.body;
     
     // Validación de campos obligatorios
-    if (!nombre || !duracion || !hora_inicio || !hora_fin) {
+    if (!nombre || !duracion || !hora_inicio || !hora_fin || !jornada) {
       return res.status(400).json({ 
-        message: "Faltan campos requeridos: nombre, duracion, hora_inicio, hora_fin" 
+        message: "Faltan campos requeridos: nombre, duracion, hora_inicio, hora_fin, jornada" 
       });
     }
 
@@ -167,8 +175,15 @@ export const updateIED = async (req, res) => {
         message: "La hora_fin debe ser posterior a la hora_inicio" 
       });
     }
+
+    //Validación de longitud de jornada
+    if (jornada.length > 50) {
+      return res.status(400).json({ 
+        message: "La jornada no puede exceder 50 caracteres" 
+      });
+    }
     
-    const result = await IED.update(id, { nombre, telefono, duracion, hora_inicio, hora_fin });
+    const result = await IED.update(id, { nombre, telefono, duracion, hora_inicio, hora_fin, jornada });
     
     if (result.affectedRows === 0) {
       return res.status(404).json({ 

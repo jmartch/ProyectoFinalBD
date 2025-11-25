@@ -35,12 +35,12 @@ export const getRegistroClasesById = async (req, res) => {
 
 export const createRegistroClases = async (req, res) => {
   try {
-    const { id_aula, codigo, fecha, is_festivo, dictada, fecha_reposicion } = req.body;
+    const { numero_semana, id_aula, codigo, fecha, is_festivo, dictada, fecha_reposicion } = req.body;
     
     // Validación de campos obligatorios
-    if (!id_aula || !codigo || !fecha) {
+    if (!numero_semana || !id_aula || !codigo || !fecha) {
       return res.status(400).json({ 
-        message: "Faltan campos requeridos: id_aula, codigo, fecha" 
+        message: "Faltan campos requeridos: numero_semana, id_aula, codigo, fecha" 
       });
     }
 
@@ -84,6 +84,7 @@ export const createRegistroClases = async (req, res) => {
     }
     
     const result = await RegistroClases.create({ 
+      numero_semana,
       id_aula, 
       codigo, 
       fecha, 
@@ -96,6 +97,7 @@ export const createRegistroClases = async (req, res) => {
       message: "Registro de clase creado exitosamente",
       data: { 
         num_registro: result.insertId,
+        numero_semana,
         id_aula, 
         codigo, 
         fecha, 
@@ -108,7 +110,7 @@ export const createRegistroClases = async (req, res) => {
     // Manejo de llave foránea inválida
     if (error.code === 'ER_NO_REFERENCED_ROW_2') {
       return res.status(404).json({ 
-        message: "El aula o el código especificado no existe" 
+        message: "El aula, el código o la semana especificados no existen" 
       });
     }
     // Manejo de registro duplicado
@@ -192,7 +194,7 @@ export const updateRegistroClases = async (req, res) => {
     // Manejo de llave foránea inválida
     if (error.code === 'ER_NO_REFERENCED_ROW_2') {
       return res.status(404).json({ 
-        message: "El aula o el código especificado no existe" 
+        message: "El aula, el código o la semana especificados no existen" 
       });
     }
     res.status(500).json({ 

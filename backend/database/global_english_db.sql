@@ -46,10 +46,10 @@ create table horario(
     horas_duracion int
 );
 
-create table asignario_aula_horario(
+create table asignacion_aula_horario(
 	id_horario int not null,
     id_aula int not null,
-    fecha_inicio date,
+    fecha_inicio date not null,
     fecha_fin date,
     foreign key (id_horario) references horario(id_horario)
         on delete cascade
@@ -57,7 +57,7 @@ create table asignario_aula_horario(
 	foreign key (id_aula) references aula(id_aula)
         on delete cascade
         on update cascade,
-	primary key (id_horario, id_aula)
+	primary key (id_horario, id_aula, fecha_inicio)
 );
 
 create table funcionario(
@@ -89,9 +89,9 @@ create table tutor(
     id_tutor int auto_increment primary key
 );
 
-create table registro_tutores(
-    doc_funcionario int,
-    id_tutor int,
+create table registro_tutor(
+    doc_funcionario int not null,
+    id_tutor int not null,
     fecha_asignacion date not null,
     foreign key (doc_funcionario) references funcionario(doc_funcionario)
         on delete cascade
@@ -99,7 +99,21 @@ create table registro_tutores(
     foreign key (id_tutor) references tutor(id_tutor)
         on delete cascade
         on update cascade,
-    primary key (doc_funcionario, id_tutor)
+    primary key (doc_funcionario, id_tutor, fecha_asignacion)
+);
+
+create table aula_tutor(
+	id_aula int not null,
+    id_tutor int not null,
+    fecha_asignacion date not null,
+    fecha_fin date,
+    foreign key (id_aula) references aula(id_aula)
+        on delete cascade
+        on update cascade,
+	foreign key (id_tutor) references tutor(id_tutor)
+        on delete cascade
+        on update cascade,
+	primary key (id_aula, id_tutor, fecha_asignacion)
 );
 
 create table usuario(
@@ -113,17 +127,17 @@ create table usuario(
 );
 
 create table matricula(
-    id_ied int,
+    id_aula int,
     doc_estudiante int,
     fecha_inicio date not null,
-    fecha_fin date not null,
+    fecha_fin date,
     foreign key (doc_estudiante) references estudiante(doc_estudiante)
         on delete cascade
         on update cascade,
-    foreign key (id_ied) references ied(id_ied)
+    foreign key (id_aula) references aula(id_aula)
         on delete cascade
         on update cascade,
-    primary key (doc_estudiante, id_ied)
+    primary key (doc_estudiante, id_aula, fecha_inicio)
 );
 
 create table motivo(
@@ -217,3 +231,4 @@ create table festivo(
     fecha date not null,
     descripcion varchar(50) not null
 );
+
