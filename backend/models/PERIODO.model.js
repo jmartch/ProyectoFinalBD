@@ -3,33 +3,39 @@ import db from "../config/db.js";
 
 export default {
   getAll: async () => {
-    const [rows] = await db.query("SELECT * FROM PERIODO");
+    const [rows] = await db.query("SELECT * FROM periodo");
     return rows;
   },
 
-  getById: async (id) => {
-    const [rows] = await db.query("SELECT * FROM PERIODO WHERE id_periodo = ?", [id]);
+  getById: async (id_periodo) => {
+    const [rows] = await db.query(
+      "SELECT * FROM periodo WHERE id_periodo = ?",
+      [id_periodo]
+    );
     return rows[0];
   },
 
   create: async ({ fecha_inicio, fecha_fin }) => {
     const [result] = await db.query(
-      "INSERT INTO PERIODO (fecha_inicio, fecha_fin) VALUES (?, ?)",
+      "INSERT INTO periodo (fecha_inicio, fecha_fin) VALUES (?, ?)",
       [fecha_inicio, fecha_fin]
     );
     return { insertId: result.insertId };
   },
 
-  update: async (id, { fecha_inicio, fecha_fin }) => {
+  updateById: async (id_periodo, { fecha_inicio, fecha_fin }) => {
     const [result] = await db.query(
-      "UPDATE PERIODO SET fecha_inicio = ?, fecha_fin = ? WHERE id_periodo = ?",
-      [fecha_inicio, fecha_fin, id]
+      "UPDATE periodo SET fecha_inicio = ?, fecha_fin = ? WHERE id_periodo = ?",
+      [fecha_inicio, fecha_fin, id_periodo]
     );
     return result;
   },
 
-  remove: async (id) => {
-    const [result] = await db.query("DELETE FROM PERIODO WHERE id_periodo = ?", [id]);
+  removeById: async (id_periodo) => {
+    const [result] = await db.query(
+      "DELETE FROM periodo WHERE id_periodo = ?",
+      [id_periodo]
+    );
     return result;
   }
 };

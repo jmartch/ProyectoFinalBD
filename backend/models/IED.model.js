@@ -1,4 +1,4 @@
- // models/IED.model.js
+// models/IED.model.js
 import db from "../config/db.js";
 
 export default {
@@ -7,29 +7,33 @@ export default {
     return rows;
   },
 
-  getById: async (id) => {
-    const [rows] = await db.query("SELECT * FROM IED WHERE id_IED = ?", [id]);
+  getById: async (id_ied) => {
+    const [rows] = await db.query(
+      "SELECT * FROM IED WHERE id_ied = ?",
+      [id_ied]
+    );
     return rows[0];
   },
 
-  create: async ({ nombre, telefono, duracion, hora_inicio, hora_fin }) => {
+  create: async ({ id_ied, nombre, telefono, duracion, hora_inicio, hora_fin, jornada }) => {
     const [result] = await db.query(
-      "INSERT INTO IED (nombre, telefono, duracion, hora_inicio, hora_fin) VALUES (?, ?, ?, ?, ?)",
-      [nombre, telefono, duracion, hora_inicio, hora_fin]
+      "INSERT INTO IED (id_ied, nombre, telefono, duracion, hora_inicio, hora_fin, jornada) VALUES (?, ?, ?, ?, ?, ?, ?)",
+      [id_ied, nombre, telefono, duracion, hora_inicio, hora_fin, jornada]
     );
     return { insertId: result.insertId };
   },
 
-  update: async (id, { nombre, telefono, duracion, hora_inicio, hora_fin }) => {
+  update: async (id_ied, data) => {
+    const { nombre, telefono, duracion, hora_inicio, hora_fin, jornada } = data;
     const [result] = await db.query(
-      "UPDATE IED SET nombre=?, telefono=?, duracion=?, hora_inicio=?, hora_fin=? WHERE id_IED=?",
-      [nombre, telefono, duracion, hora_inicio, hora_fin, id]
+      "UPDATE IED SET nombre=?, telefono=?, duracion=?, hora_inicio=?, hora_fin=?, jornada=? WHERE id_ied=?",
+      [nombre, telefono, duracion, hora_inicio, hora_fin, jornada, id_ied]
     );
     return result;
   },
 
-  remove: async (id) => {
-    const [result] = await db.query("DELETE FROM IED WHERE id_IED = ?", [id]);
+  remove: async (id_ied) => {
+    const [result] = await db.query("DELETE FROM IED WHERE id_ied = ?", [id_ied]);
     return result;
   }
 };

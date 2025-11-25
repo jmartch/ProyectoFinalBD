@@ -15,8 +15,8 @@ export const getAllRegistrosTutores = async (req, res) => {
 
 export const getRegistroTutoresByKeys = async (req, res) => {
   try {
-    const { doc_funcionario, id_tutor } = req.params;
-    const registro = await RegistroTutores.getByKeys(doc_funcionario, id_tutor);
+    const { doc_funcionario, id_tutor, fecha_asignacion } = req.params;
+    const registro = await RegistroTutores.getByKeys(doc_funcionario, id_tutor, fecha_asignacion);
     
     if (!registro) {
       return res.status(404).json({ 
@@ -98,11 +98,11 @@ export const createRegistroTutores = async (req, res) => {
 
 export const updateRegistroTutoresByKeys = async (req, res) => {
   try {
-    const { doc_funcionario, id_tutor } = req.params;
-    const { fecha_asignacion } = req.body;
+    const { doc_funcionario, id_tutor, fecha_asignacion } = req.params;
+    const { fecha_asignacion: new_fecha_asignacion } = req.body;
     
     // Validar que se proporcione la fecha
-    if (!fecha_asignacion) {
+    if (!new_fecha_asignacion) {
       return res.status(400).json({ 
         message: "Debe proporcionar la fecha_asignacion para actualizar" 
       });
@@ -110,14 +110,14 @@ export const updateRegistroTutoresByKeys = async (req, res) => {
 
     // Validación de formato de fecha
     const fechaRegex = /^\d{4}-\d{2}-\d{2}$/;
-    if (!fechaRegex.test(fecha_asignacion)) {
+    if (!fechaRegex.test(new_fecha_asignacion)) {
       return res.status(400).json({ 
         message: "Formato de fecha inválido. Use YYYY-MM-DD" 
       });
     }
 
     // Validar que la fecha de asignación no sea futura
-    const fechaAsignacionDate = new Date(fecha_asignacion);
+    const fechaAsignacionDate = new Date(new_fecha_asignacion);
     const hoy = new Date();
     hoy.setHours(0, 0, 0, 0); // Normalizar a inicio del día
     if (fechaAsignacionDate > hoy) {
@@ -126,7 +126,7 @@ export const updateRegistroTutoresByKeys = async (req, res) => {
       });
     }
     
-    const result = await RegistroTutores.updateByKeys(doc_funcionario, id_tutor, { fecha_asignacion });
+    const result = await RegistroTutores.updateByKeys(doc_funcionario, id_tutor, fecha_asignacion, { fecha_asignacion: new_fecha_asignacion });
     
     if (result.affectedRows === 0) {
       return res.status(404).json({ 
@@ -148,8 +148,8 @@ export const updateRegistroTutoresByKeys = async (req, res) => {
 
 export const deleteRegistroTutoresByKeys = async (req, res) => {
   try {
-    const { doc_funcionario, id_tutor } = req.params;
-    const result = await RegistroTutores.removeByKeys(doc_funcionario, id_tutor);
+    const { doc_funcionario, id_tutor, fecha_asignacion } = req.params;
+    const result = await RegistroTutores.removeByKeys(doc_funcionario, id_tutor, fecha_asignacion);
     
     if (result.affectedRows === 0) {
       return res.status(404).json({ 

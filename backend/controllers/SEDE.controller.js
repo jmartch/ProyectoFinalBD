@@ -35,12 +35,12 @@ export const getSedeById = async (req, res) => {
 
 export const createSede = async (req, res) => {
   try {
-    const { id_IED, direccion } = req.body;
+    const { id_IED, direccion, tipo } = req.body;
     
     // Validación de campos obligatorios
-    if (!id_IED || !direccion) {
+    if (!id_IED || !direccion || !tipo) {
       return res.status(400).json({ 
-        message: "Faltan campos requeridos: id_IED, direccion" 
+        message: "Faltan campos requeridos: id_IED, direccion, tipo" 
       });
     }
 
@@ -57,10 +57,18 @@ export const createSede = async (req, res) => {
         message: "La dirección no puede estar vacía o contener solo espacios" 
       });
     }
+
+    //Validación de longitud de tipo
+    if (tipo.length > 50) {
+      return res.status(400).json({ 
+        message: "El tipo no puede exceder 50 caracteres" 
+      });
+    }
     
     const result = await Sede.create({ 
       id_IED, 
-      direccion: direccion.trim() 
+      direccion: direccion.trim(),
+      tipo 
     });
     
     res.status(201).json({ 
@@ -68,7 +76,8 @@ export const createSede = async (req, res) => {
       data: { 
         id_sede: result.insertId,
         id_IED, 
-        direccion: direccion.trim() 
+        direccion: direccion.trim(),
+        tipo 
       }
     });
   } catch (error) {
@@ -88,12 +97,12 @@ export const createSede = async (req, res) => {
 export const updateSede = async (req, res) => {
   try {
     const { id } = req.params;
-    const { id_IED, direccion } = req.body;
+    const { id_IED, direccion, tipo } = req.body;
     
     // Validar que haya datos para actualizar
-    if (!id_IED && !direccion) {
+    if (!id_IED && !direccion && !tipo) {
       return res.status(400).json({ 
-        message: "Debe proporcionar al menos un campo para actualizar (id_IED, direccion)" 
+        message: "Debe proporcionar al menos un campo para actualizar (id_IED, direccion, tipo)" 
       });
     }
 
@@ -111,6 +120,14 @@ export const updateSede = async (req, res) => {
           message: "La dirección no puede estar vacía o contener solo espacios" 
         });
       }
+
+      //Validación de longitud de tipo
+      if (tipo.length > 50) {
+        return res.status(400).json({ 
+          message: "El tipo no puede exceder 50 caracteres" 
+        });
+      }
+      
     }
 
     // Obtener sede actual para mantener valores no actualizados

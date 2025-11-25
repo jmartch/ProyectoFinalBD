@@ -35,12 +35,12 @@ export const getHorarioById = async (req, res) => {
 
 export const createHorario = async (req, res) => {
   try {
-    const { id_aula, dia_semana, hora_inicio, horas_duracion } = req.body;
+    const {dia_semana, hora_inicio, horas_duracion } = req.body;
     
     // Validación de campos obligatorios
-    if (!id_aula || !dia_semana || !hora_inicio || !horas_duracion) {
+    if (!dia_semana || !hora_inicio || !horas_duracion) {
       return res.status(400).json({ 
-        message: "Faltan campos requeridos: id_aula, dia_semana, hora_inicio, horas_duracion" 
+        message: "Faltan campos requeridos: dia_semana, hora_inicio, horas_duracion" 
       });
     }
 
@@ -68,7 +68,6 @@ export const createHorario = async (req, res) => {
     }
     
     const result = await Horario.create({ 
-      id_aula, 
       dia_semana, 
       hora_inicio, 
       horas_duracion 
@@ -78,19 +77,12 @@ export const createHorario = async (req, res) => {
       message: "Horario creado exitosamente",
       data: { 
         id_horario: result.insertId,
-        id_aula, 
         dia_semana, 
         hora_inicio, 
         horas_duracion 
       }
     });
   } catch (error) {
-    // Manejo de llave foránea inválida (aula no existe)
-    if (error.code === 'ER_NO_REFERENCED_ROW_2') {
-      return res.status(404).json({ 
-        message: "El aula especificada no existe" 
-      });
-    }
     res.status(500).json({ 
       message: "Error al crear el horario", 
       error: error.message 
@@ -152,12 +144,6 @@ export const updateHorario = async (req, res) => {
       data: { id_horario: id, ...data }
     });
   } catch (error) {
-    // Manejo de llave foránea inválida
-    if (error.code === 'ER_NO_REFERENCED_ROW_2') {
-      return res.status(404).json({ 
-        message: "El aula especificada no existe" 
-      });
-    }
     res.status(500).json({ 
       message: "Error al actualizar el horario", 
       error: error.message 
