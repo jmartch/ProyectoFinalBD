@@ -1,0 +1,21 @@
+# Node modules
+node_modules/
+**/node_modules/
+
+# Variables de entorno
+.env
+**/.env
+
+# Logs
+*.log
+
+# Build
+dist/
+build/
+
+# Sistema
+.DS_Store
+Thumbs.db
+
+# Docker volumes
+mysql_data/
