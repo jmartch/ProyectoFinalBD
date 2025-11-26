@@ -1,4 +1,4 @@
-// routes/MOTIVO.routes.js
+// routes/motivo.routes.js
 import { Router } from "express";
 import * as motivoController from "../controllers/MOTIVO.controller.js";
 

@@ -3,13 +3,13 @@ import db from "../config/db.js";
 
 export default {
   getAll: async () => {
-    const [rows] = await db.query("SELECT * FROM HORARIO");
+    const [rows] = await db.query("SELECT * FROM horario");
     return rows;
   },
 
   getById: async (id_horario) => {
     const [rows] = await db.query(
-      "SELECT * FROM HORARIO WHERE id_horario = ?",
+      "SELECT * FROM horario WHERE id_horario = ?",
       [id_horario]
     );
     return rows[0];
@@ -17,16 +17,15 @@ export default {
 
   create: async ({ dia_semana, hora_inicio, horas_duracion }) => {
     const [result] = await db.query(
-      "INSERT INTO HORARIO (dia_semana, hora_inicio, horas_duracion) VALUES (?, ?, ?)",
+      "INSERT INTO horario (dia_semana, hora_inicio, horas_duracion) VALUES (?, ?, ?)",
       [dia_semana, hora_inicio, horas_duracion]
     );
     return { insertId: result.insertId };
   },
 
-  update: async (id_horario, data) => {
-    const { dia_semana, hora_inicio, horas_duracion } = data;
+  update: async (id_horario, { dia_semana, hora_inicio, horas_duracion }) => {
     const [result] = await db.query(
-      "UPDATE HORARIO SET dia_semana=?, hora_inicio=?, horas_duracion=? WHERE id_horario=?",
+      "UPDATE horario SET dia_semana = ?, hora_inicio = ?, horas_duracion = ? WHERE id_horario = ?",
       [dia_semana, hora_inicio, horas_duracion, id_horario]
     );
     return result;
@@ -34,9 +33,9 @@ export default {
 
   remove: async (id_horario) => {
     const [result] = await db.query(
-      "DELETE FROM HORARIO WHERE id_horario=?",
+      "DELETE FROM horario WHERE id_horario = ?",
       [id_horario]
     );
     return result;
-  }
+  },
 };

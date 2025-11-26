@@ -7,41 +7,40 @@ Composite PK: (num_registro, doc_estudiante)
 
 export default {
   getAll: async () => {
-    const [rows] = await db.query("SELECT * FROM ASISTENCIA");
+    const [rows] = await db.query("SELECT * FROM asistencia");
     return rows;
   },
 
   getByKeys: async (num_registro, doc_estudiante) => {
     const [rows] = await db.query(
-      "SELECT * FROM ASISTENCIA WHERE num_registro = ? AND doc_estudiante = ?",
+      "SELECT * FROM asistencia WHERE num_registro = ? AND doc_estudiante = ?",
       [num_registro, doc_estudiante]
     );
     return rows[0];
   },
 
-  create: async ({ num_registro, doc_estudiante, asisto }) => {
+  create: async ({ num_registro, doc_estudiante, asistio }) => {
     const [result] = await db.query(
-      "INSERT INTO ASISTENCIA (num_registro, doc_estudiante, asisto) VALUES (?, ?, ?)",
-      [num_registro, doc_estudiante, asisto]
+      "INSERT INTO asistencia (num_registro, doc_estudiante, asistio) VALUES (?, ?, ?)",
+      [num_registro, doc_estudiante, asistio]
     );
-    return { insertId: result.insertId };
+    // al ser PK compuesta no hay insertId útil, pero dejamos el result por consistencia
+    return result;
   },
 
-  
-
-  updateByKeys: async (num_registro, doc_estudiante, { asisto }) => {
+  updateByKeys: async (num_registro, doc_estudiante, { asistio }) => {
     const [result] = await db.query(
-      "UPDATE ASISTENCIA SET asisto = ? WHERE num_registro = ? AND doc_estudiante = ?",
-      [asisto, num_registro, doc_estudiante]
+      "UPDATE asistencia SET asistio = ? WHERE num_registro = ? AND doc_estudiante = ?",
+      [asistio, num_registro, doc_estudiante]
     );
     return result;
   },
 
   removeByKeys: async (num_registro, doc_estudiante) => {
     const [result] = await db.query(
-      "DELETE FROM ASISTENCIA WHERE num_registro = ? AND doc_estudiante = ?",
+      "DELETE FROM asistencia WHERE num_registro = ? AND doc_estudiante = ?",
       [num_registro, doc_estudiante]
     );
     return result;
-  }
+  },
 };

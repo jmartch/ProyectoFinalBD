@@ -10,4 +10,4 @@ router.post("/", estudianteController.createEstudiante);
 router.put("/:doc", estudianteController.updateEstudiante);
 router.delete("/:doc", estudianteController.deleteEstudiante);
 
-export default router;
+export default router; 

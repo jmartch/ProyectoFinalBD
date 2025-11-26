@@ -51,14 +51,14 @@ export const createSede = async (req, res) => {
       });
     }
 
-    // Validación básica de formato de dirección (no vacía, no solo espacios)
+    // Validación básica de formato de dirección
     if (direccion.trim().length === 0) {
       return res.status(400).json({ 
         message: "La dirección no puede estar vacía o contener solo espacios" 
       });
     }
 
-    //Validación de longitud de tipo
+    // Validación de longitud de tipo
     if (tipo.length > 50) {
       return res.status(400).json({ 
         message: "El tipo no puede exceder 50 caracteres" 
@@ -82,7 +82,7 @@ export const createSede = async (req, res) => {
     });
   } catch (error) {
     // Manejo de llave foránea inválida (IED no existe)
-    if (error.code === 'ER_NO_REFERENCED_ROW_2') {
+    if (error.code === "ER_NO_REFERENCED_ROW_2") {
       return res.status(404).json({ 
         message: "La IED especificada no existe" 
       });
@@ -107,27 +107,25 @@ export const updateSede = async (req, res) => {
     }
 
     // Validación de longitud de dirección (si se proporciona)
-    if (direccion) {
+    if (direccion !== undefined) {
       if (direccion.length < 5 || direccion.length > 200) {
         return res.status(400).json({ 
           message: "La dirección debe tener entre 5 y 200 caracteres" 
         });
       }
 
-      // Validación básica de formato de dirección
       if (direccion.trim().length === 0) {
         return res.status(400).json({ 
           message: "La dirección no puede estar vacía o contener solo espacios" 
         });
       }
+    }
 
-      //Validación de longitud de tipo
-      if (tipo.length > 50) {
-        return res.status(400).json({ 
-          message: "El tipo no puede exceder 50 caracteres" 
-        });
-      }
-      
+    // Validación de longitud de tipo (si se proporciona)
+    if (tipo !== undefined && tipo.length > 50) {
+      return res.status(400).json({ 
+        message: "El tipo no puede exceder 50 caracteres" 
+      });
     }
 
     // Obtener sede actual para mantener valores no actualizados
@@ -139,8 +137,9 @@ export const updateSede = async (req, res) => {
     }
 
     const datosActualizados = {
-      id_IED: id_IED || sedeActual.id_IED,
-      direccion: direccion ? direccion.trim() : sedeActual.direccion
+      id_IED: id_IED ?? sedeActual.id_IED,
+      direccion: direccion !== undefined ? direccion.trim() : sedeActual.direccion,
+      tipo: tipo ?? sedeActual.tipo
     };
     
     const result = await Sede.update(id, datosActualizados);
@@ -157,7 +156,7 @@ export const updateSede = async (req, res) => {
     });
   } catch (error) {
     // Manejo de llave foránea inválida
-    if (error.code === 'ER_NO_REFERENCED_ROW_2') {
+    if (error.code === "ER_NO_REFERENCED_ROW_2") {
       return res.status(404).json({ 
         message: "La IED especificada no existe" 
       });
@@ -184,8 +183,7 @@ export const deleteSede = async (req, res) => {
       message: "Sede eliminada exitosamente" 
     });
   } catch (error) {
-    // Manejo de restricciones de llave foránea al eliminar
-    if (error.code === 'ER_ROW_IS_REFERENCED_2') {
+    if (error.code === "ER_ROW_IS_REFERENCED_2") {
       return res.status(409).json({ 
         message: "No se puede eliminar la sede porque tiene registros asociados (aulas, funcionarios, etc.)" 
       });

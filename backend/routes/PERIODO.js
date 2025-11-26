@@ -1,4 +1,4 @@
-// routes/PERIODO.routes.js
+// routes/periodo.routes.js
 import { Router } from "express";
 import * as periodoController from "../controllers/PERIODO.controller.js";
 

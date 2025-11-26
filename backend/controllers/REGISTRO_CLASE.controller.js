@@ -15,8 +15,8 @@ export const getAllRegistrosClases = async (req, res) => {
 
 export const getRegistroClasesById = async (req, res) => {
   try {
-    const { num } = req.params;
-    const registro = await RegistroClases.getById(num);
+    const { num_registro } = req.params;
+    const registro = await RegistroClases.getById(num_registro);
     
     if (!registro) {
       return res.status(404).json({ 
@@ -35,12 +35,20 @@ export const getRegistroClasesById = async (req, res) => {
 
 export const createRegistroClases = async (req, res) => {
   try {
-    const { numero_semana, id_aula, codigo, fecha, is_festivo, dictada, fecha_reposicion } = req.body;
+    const { 
+      numero_semana, 
+      id_aula, 
+      codigo_motivo, 
+      fecha, 
+      is_festivo, 
+      dictada, 
+      fecha_reposicion 
+    } = req.body;
     
     // Validación de campos obligatorios
-    if (!numero_semana || !id_aula || !codigo || !fecha) {
+    if (!numero_semana || !id_aula || !codigo_motivo || !fecha) {
       return res.status(400).json({ 
-        message: "Faltan campos requeridos: numero_semana, id_aula, codigo, fecha" 
+        message: "Faltan campos requeridos: numero_semana, id_aula, codigo_motivo, fecha" 
       });
     }
 
@@ -59,10 +67,8 @@ export const createRegistroClases = async (req, res) => {
       });
     }
 
-    // Validación de is_festivo (debe ser booleano o 0/1)
+    // Normalizar booleanos a 0/1
     const isFestivoValue = is_festivo !== undefined ? (is_festivo ? 1 : 0) : 0;
-
-    // Validación de dictada (debe ser booleano o 0/1)
     const dictadaValue = dictada !== undefined ? (dictada ? 1 : 0) : 1;
 
     // Si es festivo y no fue dictada, debería tener fecha de reposición
@@ -86,7 +92,7 @@ export const createRegistroClases = async (req, res) => {
     const result = await RegistroClases.create({ 
       numero_semana,
       id_aula, 
-      codigo, 
+      codigo_motivo, 
       fecha, 
       is_festivo: isFestivoValue, 
       dictada: dictadaValue, 
@@ -99,7 +105,7 @@ export const createRegistroClases = async (req, res) => {
         num_registro: result.insertId,
         numero_semana,
         id_aula, 
-        codigo, 
+        codigo_motivo, 
         fecha, 
         is_festivo: isFestivoValue, 
         dictada: dictadaValue, 
@@ -110,10 +116,10 @@ export const createRegistroClases = async (req, res) => {
     // Manejo de llave foránea inválida
     if (error.code === 'ER_NO_REFERENCED_ROW_2') {
       return res.status(404).json({ 
-        message: "El aula, el código o la semana especificados no existen" 
+        message: "El aula, el motivo o la semana especificados no existen" 
       });
     }
-    // Manejo de registro duplicado
+    // Manejo de registro duplicado (poco probable con PK autoincremental, pero por si hay UNIQUE)
     if (error.code === 'ER_DUP_ENTRY') {
       return res.status(409).json({ 
         message: "Ya existe un registro de clase con estos datos" 
@@ -128,7 +134,7 @@ export const createRegistroClases = async (req, res) => {
 
 export const updateRegistroClases = async (req, res) => {
   try {
-    const { num } = req.params;
+    const { num_registro } = req.params;
     const data = req.body;
     
     // Validar que haya datos para actualizar
@@ -139,35 +145,29 @@ export const updateRegistroClases = async (req, res) => {
     }
 
     // Validación de fecha si se proporciona
-    if (data.fecha) {
-      const fechaRegex = /^\d{4}-\d{2}-\d{2}$/;
-      if (!fechaRegex.test(data.fecha)) {
-        return res.status(400).json({ 
-          message: "Formato de fecha inválido. Use YYYY-MM-DD" 
-        });
-      }
+    const fechaRegex = /^\d{4}-\d{2}-\d{2}$/;
+    if (data.fecha && !fechaRegex.test(data.fecha)) {
+      return res.status(400).json({ 
+        message: "Formato de fecha inválido. Use YYYY-MM-DD" 
+      });
     }
 
     // Validación de fecha_reposicion si se proporciona
-    if (data.fecha_reposicion) {
-      const fechaRegex = /^\d{4}-\d{2}-\d{2}$/;
-      if (!fechaRegex.test(data.fecha_reposicion)) {
-        return res.status(400).json({ 
-          message: "Formato de fecha_reposicion inválido. Use YYYY-MM-DD" 
-        });
-      }
+    if (data.fecha_reposicion && !fechaRegex.test(data.fecha_reposicion)) {
+      return res.status(400).json({ 
+        message: "Formato de fecha_reposicion inválido. Use YYYY-MM-DD" 
+      });
     }
 
-    // Convertir booleanos a 0/1
+    // Normalizar booleanos a 0/1
     if (data.is_festivo !== undefined) {
       data.is_festivo = data.is_festivo ? 1 : 0;
     }
-
     if (data.dictada !== undefined) {
       data.dictada = data.dictada ? 1 : 0;
     }
 
-    // Validar lógica de fecha_reposicion
+    // Validar lógica de fecha_reposicion si vienen ambas fechas
     if (data.fecha && data.fecha_reposicion) {
       const fechaDate = new Date(data.fecha);
       const fechaReposicionDate = new Date(data.fecha_reposicion);
@@ -178,7 +178,7 @@ export const updateRegistroClases = async (req, res) => {
       }
     }
     
-    const result = await RegistroClases.update(num, data);
+    const result = await RegistroClases.updateById(num_registro, data);
     
     if (result.affectedRows === 0) {
       return res.status(404).json({ 
@@ -188,13 +188,13 @@ export const updateRegistroClases = async (req, res) => {
     
     res.json({ 
       message: "Registro de clase actualizado exitosamente",
-      data: { num_registro: num, ...data }
+      data: { num_registro, ...data }
     });
   } catch (error) {
     // Manejo de llave foránea inválida
     if (error.code === 'ER_NO_REFERENCED_ROW_2') {
       return res.status(404).json({ 
-        message: "El aula, el código o la semana especificados no existen" 
+        message: "El aula, el motivo o la semana especificados no existen" 
       });
     }
     res.status(500).json({ 
@@ -206,8 +206,8 @@ export const updateRegistroClases = async (req, res) => {
 
 export const deleteRegistroClases = async (req, res) => {
   try {
-    const { num } = req.params;
-    const result = await RegistroClases.remove(num);
+    const { num_registro } = req.params;
+    const result = await RegistroClases.removeById(num_registro);
     
     if (result.affectedRows === 0) {
       return res.status(404).json({ 
@@ -222,7 +222,7 @@ export const deleteRegistroClases = async (req, res) => {
     // Manejo de restricciones de llave foránea al eliminar
     if (error.code === 'ER_ROW_IS_REFERENCED_2') {
       return res.status(409).json({ 
-        message: "No se puede eliminar el registro de clase porque tiene registros asociados" 
+        message: "No se puede eliminar el registro de clase porque tiene registros asociados (asistencias, etc.)" 
       });
     }
     res.status(500).json({ 

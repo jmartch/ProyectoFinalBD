@@ -22,6 +22,10 @@ import registroTutoresRoutes from './routes/REGISTRO_TUTOR.js';
 import componenteRoutes from './routes/COMPONENTE.js';
 import funcionarioRoutes from './routes/FUNCIONARIO.js';
 import detalleNotaRoutes from './routes/DETALLE_NOTA.js';
+import aulaTutorRoutes from "./routes/AULA_TUTOR.js";
+import programaRoutes from "./routes/PROGRAMA.js";
+import semanaRoutes from "./routes/SEMANA.js";
+
 
 dotenv.config();
 const app = express();
@@ -49,6 +53,10 @@ app.use('/api/registro_tutores', registroTutoresRoutes);
 app.use('/api/componentes', componenteRoutes);
 app.use('/api/funcionarios', funcionarioRoutes);
 app.use('/api/detalle_nota', detalleNotaRoutes);
+app.use("/api/aula-tutor", aulaTutorRoutes);
+app.use("/api/programas", programaRoutes);
+app.use("/api/semanas", semanaRoutes);
+
 
 // Health check
 app.get('/', (req, res) => {

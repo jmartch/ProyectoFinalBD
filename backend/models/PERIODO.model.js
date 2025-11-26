@@ -37,5 +37,33 @@ export default {
       [id_periodo]
     );
     return result;
+  },
+
+  // Periodos "activos" = fecha actual dentro del rango
+  getActive: async () => {
+    const [rows] = await db.query(
+      "SELECT * FROM periodo WHERE CURDATE() BETWEEN fecha_inicio AND fecha_fin"
+    );
+    return rows;
+  },
+
+  // Verificar si un rango [fecha_inicio, fecha_fin] se solapa con otro periodo
+  // Si se pasa excludeId, se excluye ese id_periodo (para updates)
+  checkOverlap: async (fecha_inicio, fecha_fin, excludeId = null) => {
+    let sql = `
+      SELECT COUNT(*) AS count
+      FROM periodo
+      WHERE fecha_inicio <= ? 
+        AND fecha_fin   >= ?
+    `;
+    const params = [fecha_fin, fecha_inicio];
+
+    if (excludeId) {
+      sql += " AND id_periodo <> ?";
+      params.push(excludeId);
+    }
+
+    const [rows] = await db.query(sql, params);
+    return rows[0].count > 0;
   }
 };

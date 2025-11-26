@@ -66,7 +66,8 @@ export const createUsuario = async (req, res) => {
 
     // Validación de rol
     const rolesValidos = ['admin', 'profesor', 'coordinador', 'secretario'];
-    if (!rolesValidos.includes(rol.toLowerCase())) {
+    const rolNormalizado = rol.toLowerCase();
+    if (!rolesValidos.includes(rolNormalizado)) {
       return res.status(400).json({
         message: "Rol inválido. Valores permitidos: admin, profesor, coordinador, secretario"
       });
@@ -76,19 +77,19 @@ export const createUsuario = async (req, res) => {
     const saltRounds = 10;
     const hashedPassword = await bcrypt.hash(contraseña, saltRounds);
 
-    const result = await Usuario.create({
+    await Usuario.create({
       usuario,
       doc_funcionario,
       contraseña: hashedPassword,
-      rol
+      rol: rolNormalizado
     });
 
     res.status(201).json({
       message: "Usuario creado exitosamente",
       data: {
         usuario,
-        id_funcionario,
-        rol: rol.toLowerCase()
+        doc_funcionario,        // 🔥 corregido (antes: id_funcionario)
+        rol: rolNormalizado
       }
     });
   } catch (error) {
@@ -114,7 +115,7 @@ export const createUsuario = async (req, res) => {
 export const updateUsuario = async (req, res) => {
   try {
     const { usuario } = req.params;
-    const data = req.body;
+    const data = { ...req.body };
 
     // Validar que haya datos para actualizar
     if (Object.keys(data).length === 0) {
@@ -133,12 +134,13 @@ export const updateUsuario = async (req, res) => {
     // Validación de rol (si se proporciona)
     if (data.rol) {
       const rolesValidos = ['admin', 'profesor', 'coordinador', 'secretario'];
-      if (!rolesValidos.includes(data.rol.toLowerCase())) {
+      const rolNormalizado = data.rol.toLowerCase();
+      if (!rolesValidos.includes(rolNormalizado)) {
         return res.status(400).json({
           message: "Rol inválido. Valores permitidos: admin, profesor, coordinador, secretario"
         });
       }
-      data.rol = data.rol.toLowerCase();
+      data.rol = rolNormalizado;
     }
 
     // Si se actualiza la contraseña, hashearla
