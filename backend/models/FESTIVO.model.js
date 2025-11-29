@@ -2,44 +2,52 @@
 import db from "../config/db.js";
 
 /*
-PK: fecha (DATE)
+PK real: id_festivo (AUTO_INCREMENT recomendado)
 */
 
 export default {
   getAll: async () => {
-    const [rows] = await db.query("SELECT * FROM FESTIVO");
+    const [rows] = await db.query("SELECT * FROM festivo");
     return rows;
   },
 
-  getByDate: async (fecha) => {
+  getById: async (id_festivo) => {
     const [rows] = await db.query(
-      "SELECT * FROM FESTIVO WHERE fecha = ?",
-      [fecha]
+      "SELECT * FROM festivo WHERE id_festivo = ?",
+      [id_festivo]
     );
     return rows[0];
   },
 
+  // Festivos activos: fecha >= hoy
+  getActive: async () => {
+    const [rows] = await db.query(
+      "SELECT * FROM festivo WHERE fecha >= CURDATE() ORDER BY fecha ASC"
+    );
+    return rows;
+  },
+
   create: async ({ fecha, descripcion }) => {
     const [result] = await db.query(
-      "INSERT INTO FESTIVO (fecha, descripcion) VALUES (?, ?)",
+      "INSERT INTO festivo (fecha, descripcion) VALUES (?, ?)",
       [fecha, descripcion]
     );
     return { insertId: result.insertId };
   },
 
-  updateByDate: async (fecha, { descripcion }) => {
+  updateById: async (id_festivo, { fecha, descripcion }) => {
     const [result] = await db.query(
-      "UPDATE FESTIVO SET descripcion = ? WHERE fecha = ?",
-      [descripcion, fecha]
+      "UPDATE festivo SET fecha = ?, descripcion = ? WHERE id_festivo = ?",
+      [fecha, descripcion, id_festivo]
     );
     return result;
   },
 
-  removeByDate: async (fecha) => {
+  removeById: async (id_festivo) => {
     const [result] = await db.query(
-      "DELETE FROM FESTIVO WHERE fecha = ?",
-      [fecha]
+      "DELETE FROM festivo WHERE id_festivo = ?",
+      [id_festivo]
     );
     return result;
-  }
+  },
 };

@@ -1,19 +1,13 @@
-// routes/HORARIO.routes.js
+// routes/horario.routes.js
 import { Router } from "express";
-import { 
-  getAllHorarios, 
-  getHorarioById, 
-  createHorario, 
-  updateHorario, 
-  deleteHorario 
-} from "../controllers/HORARIO.controller.js";
+import * as horarioController from "../controllers/HORARIO.controller.js";
 
 const router = Router();
 
-router.get("/", getAllHorarios);
-router.get("/:id", getHorarioById);
-router.post("/", createHorario);
-router.put("/:id", updateHorario);
-router.delete("/:id", deleteHorario);
+router.get("/", horarioController.getAllHorarios);
+router.get("/:id", horarioController.getHorarioById);
+router.post("/", horarioController.createHorario);
+router.put("/:id", horarioController.updateHorario);
+router.delete("/:id", horarioController.deleteHorario);
 
 export default router;

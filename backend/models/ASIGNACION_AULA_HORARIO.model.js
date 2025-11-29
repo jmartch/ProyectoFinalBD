@@ -3,29 +3,32 @@ import db from "../config/db.js";
 
 export default {
   getAll: async () => {
-    const [rows] = await db.query("SELECT * FROM ASIGNACION_AULA_HORARIO");
+    const [rows] = await db.query("SELECT * FROM asignacion_aula_horario");
     return rows;
   },
 
   getByKeys: async (id_horario, id_aula, fecha_inicio) => {
     const [rows] = await db.query(
-      "SELECT * FROM ASIGNACION_AULA_HORARIO WHERE id_horario=? AND id_aula=? AND fecha_inicio=?",
+      "SELECT * FROM asignacion_aula_horario WHERE id_horario = ? AND id_aula = ? AND fecha_inicio = ?",
       [id_horario, id_aula, fecha_inicio]
     );
     return rows[0];
   },
 
   create: async ({ id_horario, id_aula, fecha_inicio, fecha_fin }) => {
+    // si fecha_fin viene vacío, lo mandamos como null
+    const fechaFinValue = fecha_fin || null;
+
     const [result] = await db.query(
-      "INSERT INTO ASIGNACION_AULA_HORARIO (id_horario, id_aula, fecha_inicio, fecha_fin) VALUES (?, ?, ?, ?)",
-      [id_horario, id_aula, fecha_inicio, fecha_fin]
+      "INSERT INTO asignacion_aula_horario (id_horario, id_aula, fecha_inicio, fecha_fin) VALUES (?, ?, ?, ?)",
+      [id_horario, id_aula, fecha_inicio, fechaFinValue]
     );
     return result;
   },
 
-  updateByKeys: async (id_horario, id_aula,  fecha_inicio, {fecha_fin }) => {
+  updateByKeys: async (id_horario, id_aula, fecha_inicio, { fecha_fin }) => {
     const [result] = await db.query(
-      "UPDATE ASIGNACION_AULA_HORARIO SET fecha_fin=? WHERE id_horario=? AND id_aula=? AND fecha_inicio=?",
+      "UPDATE asignacion_aula_horario SET fecha_fin = ? WHERE id_horario = ? AND id_aula = ? AND fecha_inicio = ?",
       [fecha_fin, id_horario, id_aula, fecha_inicio]
     );
     return result;
@@ -33,9 +36,9 @@ export default {
 
   removeByKeys: async (id_horario, id_aula, fecha_inicio) => {
     const [result] = await db.query(
-      "DELETE FROM ASIGNACION_AULA_HORARIO WHERE id_horario=? AND id_aula=? AND fecha_inicio=?",
+      "DELETE FROM asignacion_aula_horario WHERE id_horario = ? AND id_aula = ? AND fecha_inicio = ?",
       [id_horario, id_aula, fecha_inicio]
     );
     return result;
-  }
+  },
 };

@@ -35,34 +35,20 @@ export const getTutorById = async (req, res) => {
 
 export const createTutor = async (req, res) => {
   try {
-    const { id_tutor } = req.body;
-    
-    // Validación de campo obligatorio
-    if (!id_tutor) {
-      return res.status(400).json({ 
-        message: "Falta campo requerido: id_tutor" 
-      });
-    }
-    
-    const result = await Tutor.create({ id_tutor });
+    // No necesitamos nada en el body: se crea un tutor vacío y la BD genera el id
+    const result = await Tutor.create();
     
     res.status(201).json({ 
       message: "Tutor creado exitosamente",
       data: { 
-        id_tutor
+        id_tutor: result.insertId
       }
     });
   } catch (error) {
-    // Manejo de id duplicado
+    // Si la tabla tuviera alguna restricción única, se podría capturar aquí
     if (error.code === 'ER_DUP_ENTRY') {
       return res.status(409).json({ 
         message: "Ya existe un tutor con ese id" 
-      });
-    }
-    // Manejo de llave foránea inválida (si id_tutor es FK a otra tabla)
-    if (error.code === 'ER_NO_REFERENCED_ROW_2') {
-      return res.status(404).json({ 
-        message: "El id especificado no existe en la tabla relacionada" 
       });
     }
     res.status(500).json({ 
@@ -77,17 +63,18 @@ export const updateTutor = async (req, res) => {
     const { id } = req.params;
     const data = req.body;
     
-    // Validar que haya datos para actualizar
-    if (Object.keys(data).length === 0) {
-      return res.status(400).json({ 
-        message: "No se proporcionaron datos para actualizar" 
-      });
-    }
-
     // No permitir actualizar el id_tutor
     if (data.id_tutor) {
       return res.status(400).json({ 
         message: "No se puede actualizar el id del tutor" 
+      });
+    }
+
+    // Si en el futuro se agregan más campos a TUTOR, aquí se validarían.
+    // Por ahora, si no mandan nada útil:
+    if (Object.keys(data).length === 0) {
+      return res.status(400).json({ 
+        message: "No se proporcionaron datos para actualizar" 
       });
     }
     

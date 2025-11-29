@@ -7,39 +7,40 @@ Composite PK: (id_nota, id_componente)
 
 export default {
   getAll: async () => {
-    const [rows] = await db.query("SELECT * FROM DETALLE_NOTA");
+    const [rows] = await db.query("SELECT * FROM detalle_nota");
     return rows;
   },
 
   getByKeys: async (id_nota, id_componente) => {
     const [rows] = await db.query(
-      "SELECT * FROM DETALLE_NOTA WHERE id_nota = ? AND id_componente = ?",
+      "SELECT * FROM detalle_nota WHERE id_nota = ? AND id_componente = ?",
       [id_nota, id_componente]
     );
     return rows[0];
   },
 
-  create: async ({ id_nota, id_componente, valor }) => {
+  create: async ({ id_nota, id_componente, nota }) => {
     const [result] = await db.query(
-      "INSERT INTO DETALLE_NOTA (id_nota, id_componente, valor) VALUES (?, ?, ?)",
-      [id_nota, id_componente, valor]
+      "INSERT INTO detalle_nota (id_nota, id_componente, nota) VALUES (?, ?, ?)",
+      [id_nota, id_componente, nota]
     );
-    return { insertId: result.insertId };
+    // PK compuesta, no hay insertId útil, pero devolvemos el result por consistencia
+    return result;
   },
 
-  updateByKeys: async (id_nota, id_componente, { valor }) => {
+  updateByKeys: async (id_nota, id_componente, { nota }) => {
     const [result] = await db.query(
-      "UPDATE DETALLE_NOTA SET valor = ? WHERE id_nota = ? AND id_componente = ?",
-      [valor, id_nota, id_componente]
+      "UPDATE detalle_nota SET nota = ? WHERE id_nota = ? AND id_componente = ?",
+      [nota, id_nota, id_componente]
     );
     return result;
   },
 
   removeByKeys: async (id_nota, id_componente) => {
     const [result] = await db.query(
-      "DELETE FROM DETALLE_NOTA WHERE id_nota = ? AND id_componente = ?",
+      "DELETE FROM detalle_nota WHERE id_nota = ? AND id_componente = ?",
       [id_nota, id_componente]
     );
     return result;
-  }
+  },
 };

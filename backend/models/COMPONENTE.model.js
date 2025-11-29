@@ -7,39 +7,39 @@ PK: id_componente
 
 export default {
   getAll: async () => {
-    const [rows] = await db.query("SELECT * FROM COMPONENTE");
+    const [rows] = await db.query("SELECT * FROM componente");
     return rows;
   },
 
   getById: async (id_componente) => {
     const [rows] = await db.query(
-      "SELECT * FROM COMPONENTE WHERE id_componente = ?",
+      "SELECT * FROM componente WHERE id_componente = ?",
       [id_componente]
     );
     return rows[0];
   },
 
-  create: async ({ id_componente, nombre, porcentaje }) => {
+  create: async ({ id_periodo, nombre, porcentaje }) => {
     const [result] = await db.query(
-      "INSERT INTO COMPONENTE (id_componente, nombre, porcentaje) VALUES (?, ?, ?)",
-      [id_componente, nombre, porcentaje]
+      "INSERT INTO componente (id_periodo, nombre, porcentaje) VALUES (?, ?, ?)",
+      [id_periodo, nombre, porcentaje]
     );
     return { insertId: result.insertId };
   },
 
-  updateById: async (id_componente, { nombre, porcentaje }) => {
+  update: async (id_componente, { id_periodo, nombre, porcentaje }) => {
     const [result] = await db.query(
-      "UPDATE COMPONENTE SET nombre = ?, porcentaje = ? WHERE id_componente = ?",
-      [nombre, porcentaje, id_componente]
+      "UPDATE componente SET id_periodo = ?, nombre = ?, porcentaje = ? WHERE id_componente = ?",
+      [id_periodo, nombre, porcentaje, id_componente]
     );
     return result;
   },
 
-  removeById: async (id_componente) => {
+  remove: async (id_componente) => {
     const [result] = await db.query(
-      "DELETE FROM COMPONENTE WHERE id_componente = ?",
+      "DELETE FROM componente WHERE id_componente = ?",
       [id_componente]
     );
     return result;
-  }
+  },
 };

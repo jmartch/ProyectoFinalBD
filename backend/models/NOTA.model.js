@@ -7,37 +7,37 @@ PK: id_nota
 
 export default {
   getAll: async () => {
-    const [rows] = await db.query("SELECT * FROM NOTA");
+    const [rows] = await db.query("SELECT * FROM nota");
     return rows;
   },
 
   getById: async (id_nota) => {
     const [rows] = await db.query(
-      "SELECT * FROM NOTA WHERE id_nota = ?",
+      "SELECT * FROM nota WHERE id_nota = ?",
       [id_nota]
     );
     return rows[0];
   },
 
-  create: async ({ id_nota, doc_estudiante, id_periodo, definitiva }) => {
+  create: async ({ doc_estudiante, definitiva }) => {
     const [result] = await db.query(
-      "INSERT INTO NOTA (id_nota, doc_estudiante, id_periodo, definitiva) VALUES (?, ?, ?, ?)",
-      [id_nota, doc_estudiante, id_periodo, definitiva]
+      "INSERT INTO nota (doc_estudiante, definitiva) VALUES (?, ?)",
+      [doc_estudiante, definitiva]
     );
     return { insertId: result.insertId };
   },
 
-  updateById: async (id_nota, { doc_estudiante, id_periodo, definitiva }) => {
+  updateById: async (id_nota, { doc_estudiante, definitiva }) => {
     const [result] = await db.query(
-      "UPDATE NOTA SET doc_estudiante = ?, id_periodo = ?, definitiva = ? WHERE id_nota = ?",
-      [doc_estudiante, id_periodo, definitiva, id_nota]
+      "UPDATE nota SET doc_estudiante = ?, definitiva = ? WHERE id_nota = ?",
+      [doc_estudiante, definitiva, id_nota]
     );
     return result;
   },
 
   removeById: async (id_nota) => {
     const [result] = await db.query(
-      "DELETE FROM NOTA WHERE id_nota = ?",
+      "DELETE FROM nota WHERE id_nota = ?",
       [id_nota]
     );
     return result;
