@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { AuthUser } from '../../lib/auth';
+import { AuthUser, canAccessAdminFunctions } from '../../lib/auth';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { 
   aulas, 
@@ -9,13 +9,16 @@ import {
   schedules, 
   students, 
   studentAulaAssignments,
-  classAttendances 
+  classAttendances,
+  persons
 } from '../../lib/mockData';
-import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Clock, MapPin, Users } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Clock, MapPin, Users, Filter } from 'lucide-react';
 import { Badge } from '../ui/badge';
-import { ProgramType, DayOfWeek } from '../../types';
+import { ProgramType, DayOfWeek, UserRole } from '../../types';
 import { Button } from '../ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
+import { Label } from '../ui/label';
 
 interface ScheduleCalendarProps {
   authUser: AuthUser;
@@ -39,17 +42,49 @@ interface CalendarEvent {
 export function ScheduleCalendar({ authUser }: ScheduleCalendarProps) {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState(new Date());
+  const [filterProgram, setFilterProgram] = useState<string>('ALL');
+  const [filterInstitution, setFilterInstitution] = useState<string>('ALL');
+  const [filterAula, setFilterAula] = useState<string>('ALL');
+  const [filterTutor, setFilterTutor] = useState<string>('ALL');
+  const [filterStudent, setFilterStudent] = useState<string>('ALL');
+  const isAdmin = canAccessAdminFunctions(authUser.user.role);
 
   // Get tutor's assigned aulas and create events
   const getEvents = (): CalendarEvent[] => {
     const events: CalendarEvent[] = [];
     
-    const tutorAulas = tutorAssignments
-      .filter(ta => ta.tutorId === authUser.person.id && ta.isActive)
-      .map(ta => aulas.find(a => a.id === ta.aulaId))
-      .filter(Boolean);
+    // Si es admin, mostrar todas las aulas; si es tutor, solo sus aulas
+    let relevantAulas = isAdmin 
+      ? aulas.filter(a => a.isActive)
+      : tutorAssignments
+          .filter(ta => ta.tutorId === authUser.person.id && ta.isActive)
+          .map(ta => aulas.find(a => a.id === ta.aulaId))
+          .filter(Boolean);
 
-    tutorAulas.forEach(aula => {
+    // Apply filters
+    if (filterProgram !== 'ALL') {
+      relevantAulas = relevantAulas.filter(a => a?.programType === filterProgram);
+    }
+    if (filterInstitution !== 'ALL') {
+      relevantAulas = relevantAulas.filter(a => a?.institutionId === filterInstitution);
+    }
+    if (filterAula !== 'ALL') {
+      relevantAulas = relevantAulas.filter(a => a?.id === filterAula);
+    }
+    if (filterTutor !== 'ALL') {
+      const tutorAulaIds = tutorAssignments
+        .filter(ta => ta.tutorId === filterTutor && ta.isActive)
+        .map(ta => ta.aulaId);
+      relevantAulas = relevantAulas.filter(a => a && tutorAulaIds.includes(a.id));
+    }
+    if (filterStudent !== 'ALL') {
+      const studentAulaIds = studentAulaAssignments
+        .filter(sa => sa.studentId === filterStudent && sa.isActive)
+        .map(sa => sa.aulaId);
+      relevantAulas = relevantAulas.filter(a => a && studentAulaIds.includes(a.id));
+    }
+
+    relevantAulas.forEach(aula => {
       if (!aula) return;
       
       const institution = institutions.find(i => i.id === aula.institutionId);
@@ -191,9 +226,159 @@ export function ScheduleCalendar({ authUser }: ScheduleCalendarProps) {
       <div>
         <h2 className="text-2xl mb-2">Calendario de Clases</h2>
         <p className="text-gray-600">
-          Visualiza tu horario de clases programadas
+          {isAdmin 
+            ? 'Visualiza todas las clases programadas del programa GLOBALENGLISH'
+            : 'Visualiza tu horario de clases programadas'}
         </p>
+        {isAdmin && (
+          <Badge variant="outline" className="mt-2 bg-amber-50 text-amber-700 border-amber-300">
+            Vista Administrador - Mostrando todas las aulas del sistema
+          </Badge>
+        )}
       </div>
+
+      {/* Filters Section */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center gap-2">
+            <Filter className="w-5 h-5" />
+            <CardTitle className="text-base">Filtros de Visualización</CardTitle>
+          </div>
+          <CardDescription>
+            Filtra el calendario por programa, institución, aula, tutor o estudiante
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="filter-program">Programa</Label>
+              <Select value={filterProgram} onValueChange={setFilterProgram}>
+                <SelectTrigger id="filter-program">
+                  <SelectValue placeholder="Todos" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="ALL">Todos los programas</SelectItem>
+                  <SelectItem value={ProgramType.INSIDECLASSROOM}>INSIDECLASSROOM (4º-5º)</SelectItem>
+                  <SelectItem value={ProgramType.OUTSIDECLASSROOM}>OUTSIDECLASSROOM (9º-10º)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="filter-institution">Institución</Label>
+              <Select value={filterInstitution} onValueChange={setFilterInstitution}>
+                <SelectTrigger id="filter-institution">
+                  <SelectValue placeholder="Todas" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="ALL">Todas las instituciones</SelectItem>
+                  {institutions.map(inst => (
+                    <SelectItem key={inst.id} value={inst.id}>{inst.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="filter-aula">Aula</Label>
+              <Select value={filterAula} onValueChange={setFilterAula}>
+                <SelectTrigger id="filter-aula">
+                  <SelectValue placeholder="Todas" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="ALL">Todas las aulas</SelectItem>
+                  {aulas.filter(a => a.isActive).map(aula => (
+                    <SelectItem key={aula.id} value={aula.id}>{aula.code}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {isAdmin && (
+              <div className="space-y-2">
+                <Label htmlFor="filter-tutor">Tutor</Label>
+                <Select value={filterTutor} onValueChange={setFilterTutor}>
+                  <SelectTrigger id="filter-tutor">
+                    <SelectValue placeholder="Todos" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="ALL">Todos los tutores</SelectItem>
+                    {persons.filter(p => p.role === UserRole.TUTOR).map(tutor => (
+                      <SelectItem key={tutor.id} value={tutor.id}>
+                        {tutor.firstName} {tutor.lastName}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
+            {isAdmin && (
+              <div className="space-y-2">
+                <Label htmlFor="filter-student">Estudiante</Label>
+                <Select value={filterStudent} onValueChange={setFilterStudent}>
+                  <SelectTrigger id="filter-student">
+                    <SelectValue placeholder="Todos" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="ALL">Todos los estudiantes</SelectItem>
+                    {students.map(student => (
+                      <SelectItem key={student.id} value={student.id}>
+                        {student.firstName} {student.lastName}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+          </div>
+
+          {(filterProgram !== 'ALL' || filterInstitution !== 'ALL' || filterAula !== 'ALL' || filterTutor !== 'ALL' || filterStudent !== 'ALL') && (
+            <div className="mt-4 pt-4 border-t flex items-center justify-between">
+              <div className="flex flex-wrap gap-2">
+                {filterProgram !== 'ALL' && (
+                  <Badge variant="secondary">
+                    {filterProgram === ProgramType.INSIDECLASSROOM ? 'INSIDECLASSROOM' : 'OUTSIDECLASSROOM'}
+                  </Badge>
+                )}
+                {filterInstitution !== 'ALL' && (
+                  <Badge variant="secondary">
+                    {institutions.find(i => i.id === filterInstitution)?.name}
+                  </Badge>
+                )}
+                {filterAula !== 'ALL' && (
+                  <Badge variant="secondary">
+                    {aulas.find(a => a.id === filterAula)?.code}
+                  </Badge>
+                )}
+                {filterTutor !== 'ALL' && (
+                  <Badge variant="secondary">
+                    {persons.find(p => p.id === filterTutor)?.firstName} {persons.find(p => p.id === filterTutor)?.lastName}
+                  </Badge>
+                )}
+                {filterStudent !== 'ALL' && (
+                  <Badge variant="secondary">
+                    {students.find(s => s.id === filterStudent)?.firstName} {students.find(s => s.id === filterStudent)?.lastName}
+                  </Badge>
+                )}
+              </div>
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => {
+                  setFilterProgram('ALL');
+                  setFilterInstitution('ALL');
+                  setFilterAula('ALL');
+                  setFilterTutor('ALL');
+                  setFilterStudent('ALL');
+                }}
+              >
+                Limpiar Filtros
+              </Button>
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       <Tabs defaultValue="week" className="w-full">
         <TabsList>
@@ -307,7 +492,7 @@ export function ScheduleCalendar({ authUser }: ScheduleCalendarProps) {
                                     {event.startTime} - {event.endTime}
                                   </div>
                                   <div className="flex items-center gap-1 truncate">
-                                    <MapPin className="w-3 h-3 flex-shrink: 0" />
+                                    <MapPin className="w-3 h-3 flex-shrink-0" />
                                     <span className="truncate">{event.sedeName}</span>
                                   </div>
                                   <div className="flex items-center gap-1">
