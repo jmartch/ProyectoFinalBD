@@ -151,13 +151,9 @@ export function LoginForm({ onLogin }: LoginFormProps) {
           </h1>
 
           <Tabs defaultValue="login" className="w-full max-w-md">
-            <TabsList className=" grid-cols-1 mb-1">
-              <TabsTrigger value="login">
-                <LogIn className="w-4 h-4 mr-2" />
-                Iniciar Sesión
-              </TabsTrigger>
+            
 
-            </TabsList>
+            
 
             {/* LOGIN TAB */}
             <TabsContent value="login">
