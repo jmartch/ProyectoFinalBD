@@ -2,18 +2,18 @@
 use global_english_db;
 
 create table ied(
-    id_ied int primary key,
+    id_ied varchar(50) primary key,
     nombre varchar(50) not null,
     telefono varchar(15) not null,
     duracion time,
-    hora_inicio time,
-    hora_fin time,
+    direccion_principal varchar(50),
     jornada varchar(50)
 );
 
 create table sede(
     id_sede int auto_increment primary key,
-    id_ied int,
+    id_ied varchar(50),
+    nombre varchar(50) not null,
     direccion varchar(50) not null unique,
     tipo varchar(50) not null,
     foreign key (id_ied) references ied(id_ied)
@@ -31,6 +31,7 @@ create table aula(
     id_sede int,
     id_programa int,
     grado int,
+    capacidad int,
     foreign key (id_sede) references sede(id_sede)
         on delete cascade
         on update cascade,
@@ -67,7 +68,6 @@ create table funcionario(
     nombre2 varchar(50),
     apellido1 varchar(50) not null,
     apellido2 varchar(50),
-    sexo char(1),
     correo varchar(50) not null,
     telefono varchar(15) not null,
     fecha_contrato date not null
@@ -75,14 +75,18 @@ create table funcionario(
 
 create table estudiante(
     doc_estudiante int primary key,
+    id_ied varchar(50),
     tipo_doc varchar(50) not null,
     nombre1 varchar(50) not null,
     nombre2 varchar(50),
     apellido1 varchar(50) not null,
     apellido2 varchar(50),
-    sexo char(1),
     correo_acudiente varchar(50) not null,
-    telefono_acudiente varchar(15) not null
+    telefono_acudiente varchar(15) not null,
+    grado int,
+    foreign key (id_ied) references ied(id_ied)
+        on delete cascade
+        on update cascade
 );
 
 create table tutor(
@@ -134,6 +138,8 @@ create table matricula(
     doc_estudiante int,
     fecha_inicio date not null,
     fecha_fin date,
+    score_entrada int,
+    score_salida int,
     foreign key (doc_estudiante) references estudiante(doc_estudiante)
         on delete cascade
         on update cascade,
@@ -171,7 +177,6 @@ create table registro_clases(
     codigo_motivo int,
     fecha date not null,
     dictada boolean not null,
-    is_festivo boolean not null,
     fecha_reposicion date,
     foreign key (id_aula) references aula(id_aula)
         on delete cascade

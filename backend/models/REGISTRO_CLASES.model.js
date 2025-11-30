@@ -21,20 +21,18 @@ export default {
     codigo_motivo,
     fecha,
     dictada,
-    is_festivo,
     fecha_reposicion
   }) => {
     const [result] = await db.query(
       `INSERT INTO registro_clases 
-       (numero_semana, id_aula, codigo_motivo, fecha, dictada, is_festivo, fecha_reposicion)
-       VALUES (?, ?, ?, ?, ?, ?, ?)`,
+       (numero_semana, id_aula, codigo_motivo, fecha, dictada, fecha_reposicion)
+       VALUES (?, ?, ?, ?, ?, ?)`,
       [
         numero_semana,
         id_aula,
         codigo_motivo,
         fecha,
         dictada,
-        is_festivo,
         fecha_reposicion
       ]
     );
@@ -48,7 +46,6 @@ export default {
       codigo_motivo,
       fecha,
       dictada,
-      is_festivo,
       fecha_reposicion
     } = data;
 
@@ -59,7 +56,6 @@ export default {
         codigo_motivo = ?, 
         fecha = ?, 
         dictada = ?, 
-        is_festivo = ?, 
         fecha_reposicion = ?
        WHERE num_registro = ?`,
       [
@@ -68,7 +64,6 @@ export default {
         codigo_motivo,
         fecha,
         dictada,
-        is_festivo,
         fecha_reposicion,
         num_registro
       ]

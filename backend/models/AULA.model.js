@@ -15,18 +15,18 @@ export default {
     return rows[0];
   },
 
-  create: async ({ id_sede, id_programa, grado }) => {
+  create: async ({ id_sede, id_programa, grado, capacidad }) => {
     const [result] = await db.query(
-      "INSERT INTO aula (id_sede, id_programa, grado) VALUES (?, ?, ?)",
-      [id_sede, id_programa, grado]
+      "INSERT INTO aula (id_sede, id_programa, grado, capacidad) VALUES (?, ?, ?)",
+      [id_sede, id_programa, grado, capacidad]
     );
     return { insertId: result.insertId };
   },
 
-  update: async (id_aula, { id_sede, id_programa, grado }) => {
+  update: async (id_aula, { id_sede, id_programa, grado, capacidad }) => {
     const [result] = await db.query(
-      "UPDATE aula SET id_sede = ?, id_programa = ?, grado = ? WHERE id_aula = ?",
-      [id_sede, id_programa, grado, id_aula]
+      "UPDATE aula SET id_sede = ?, id_programa = ?, grado = ?, capacidad = ? WHERE id_aula = ?",
+      [id_sede, id_programa, grado, capacidad, id_aula]
     );
     return result;
   },

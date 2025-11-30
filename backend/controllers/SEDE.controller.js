@@ -35,12 +35,19 @@ export const getSedeById = async (req, res) => {
 
 export const createSede = async (req, res) => {
   try {
-    const { id_IED, direccion, tipo } = req.body;
+    const { id_IED, nombre, direccion, tipo } = req.body;
     
     // Validación de campos obligatorios
-    if (!id_IED || !direccion || !tipo) {
+    if (!id_IED || !nombre || !direccion || !tipo) {
       return res.status(400).json({ 
-        message: "Faltan campos requeridos: id_IED, direccion, tipo" 
+        message: "Faltan campos requeridos: id_IED, nombre, direccion, tipo" 
+      });
+    }
+
+    // Validación de longitud de nombre
+    if (nombre.length < 3 || nombre.length > 100) {
+      return res.status(400).json({ 
+        message: "El nombre debe tener entre 3 y 100 caracteres" 
       });
     }
 
@@ -66,7 +73,8 @@ export const createSede = async (req, res) => {
     }
     
     const result = await Sede.create({ 
-      id_IED, 
+      id_IED,
+      nombre, 
       direccion: direccion.trim(),
       tipo 
     });
@@ -76,6 +84,7 @@ export const createSede = async (req, res) => {
       data: { 
         id_sede: result.insertId,
         id_IED, 
+        nombre,
         direccion: direccion.trim(),
         tipo 
       }
@@ -97,13 +106,28 @@ export const createSede = async (req, res) => {
 export const updateSede = async (req, res) => {
   try {
     const { id } = req.params;
-    const { id_IED, direccion, tipo } = req.body;
+    const { id_IED, nombre, direccion, tipo } = req.body;
     
     // Validar que haya datos para actualizar
-    if (!id_IED && !direccion && !tipo) {
+    if (!id_IED && !nombre && !direccion && !tipo) {
       return res.status(400).json({ 
-        message: "Debe proporcionar al menos un campo para actualizar (id_IED, direccion, tipo)" 
+        message: "Debe proporcionar al menos un campo para actualizar (id_IED, nombre, direccion, tipo)" 
       });
+    }
+
+    // Validación de longitud de nombre (si se proporciona)
+    if (nombre !== undefined) {
+      if (nombre.length < 3 || nombre.length > 100) {
+        return res.status(400).json({ 
+          message: "El nombre debe tener entre 3 y 100 caracteres" 
+        });
+      }
+
+      if (nombre.trim().length === 0) {
+        return res.status(400).json({ 
+          message: "El nombre no puede estar vacío o contener solo espacios" 
+        });
+      }
     }
 
     // Validación de longitud de dirección (si se proporciona)
@@ -138,6 +162,7 @@ export const updateSede = async (req, res) => {
 
     const datosActualizados = {
       id_IED: id_IED ?? sedeActual.id_IED,
+      nombre: nombre ?? sedeActual.nombre,
       direccion: direccion !== undefined ? direccion.trim() : sedeActual.direccion,
       tipo: tipo ?? sedeActual.tipo
     };

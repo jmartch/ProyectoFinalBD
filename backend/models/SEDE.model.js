@@ -15,18 +15,18 @@ export default {
     return rows[0];
   },
 
-  create: async ({ id_IED, direccion, tipo }) => {
+  create: async ({ id_IED, nombre, direccion, tipo }) => {
     const [result] = await db.query(
-      "INSERT INTO SEDE (id_IED, direccion, tipo) VALUES (?, ?, ?)",
-      [id_IED, direccion, tipo]
+      "INSERT INTO SEDE (id_IED, nombre, direccion, tipo) VALUES (?, ?, ?, ?)",
+      [id_IED, nombre, direccion, tipo]
     );
     return { insertId: result.insertId };
   },
 
-  update: async (id_sede, { id_IED, direccion, tipo }) => {
+  update: async (id_sede, { id_IED, nombre, direccion, tipo }) => {
     const [result] = await db.query(
-      "UPDATE SEDE SET id_IED = ?, direccion = ?, tipo = ? WHERE id_sede = ?",
-      [id_IED, direccion, tipo, id_sede]
+      "UPDATE SEDE SET id_IED = ?, nombre = ?, direccion = ?, tipo = ? WHERE id_sede = ?",
+      [id_IED, nombre, direccion, tipo, id_sede]
     );
     return result;
   },

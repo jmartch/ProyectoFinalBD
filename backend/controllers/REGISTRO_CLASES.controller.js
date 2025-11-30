@@ -40,7 +40,6 @@ export const createRegistroClases = async (req, res) => {
       id_aula, 
       codigo_motivo, 
       fecha, 
-      is_festivo, 
       dictada, 
       fecha_reposicion 
     } = req.body;
@@ -68,7 +67,6 @@ export const createRegistroClases = async (req, res) => {
     }
 
     // Normalizar booleanos a 0/1
-    const isFestivoValue = is_festivo !== undefined ? (is_festivo ? 1 : 0) : 0;
     const dictadaValue = dictada !== undefined ? (dictada ? 1 : 0) : 1;
 
     // Si es festivo y no fue dictada, debería tener fecha de reposición
@@ -94,7 +92,6 @@ export const createRegistroClases = async (req, res) => {
       id_aula, 
       codigo_motivo, 
       fecha, 
-      is_festivo: isFestivoValue, 
       dictada: dictadaValue, 
       fecha_reposicion: fecha_reposicion || null
     });
@@ -107,7 +104,6 @@ export const createRegistroClases = async (req, res) => {
         id_aula, 
         codigo_motivo, 
         fecha, 
-        is_festivo: isFestivoValue, 
         dictada: dictadaValue, 
         fecha_reposicion: fecha_reposicion || null
       }
@@ -160,9 +156,6 @@ export const updateRegistroClases = async (req, res) => {
     }
 
     // Normalizar booleanos a 0/1
-    if (data.is_festivo !== undefined) {
-      data.is_festivo = data.is_festivo ? 1 : 0;
-    }
     if (data.dictada !== undefined) {
       data.dictada = data.dictada ? 1 : 0;
     }

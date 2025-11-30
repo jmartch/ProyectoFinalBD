@@ -44,7 +44,6 @@ export const createFuncionario = async (req, res) => {
       apellido2,
       correo,
       telefono,
-      sexo,
       fecha_contrato,
     } = req.body;
 
@@ -54,14 +53,13 @@ export const createFuncionario = async (req, res) => {
       !tipo_doc ||
       !nombre1 ||
       !apellido1 ||
-      !sexo ||
       !correo ||
       !telefono ||
       !fecha_contrato
     ) {
       return res.status(400).json({
         message:
-          "Faltan campos requeridos: doc_funcionario, tipo_doc, nombre1, apellido1, sexo, correo, telefono, fecha_contrato",
+          "Faltan campos requeridos: doc_funcionario, tipo_doc, nombre1, apellido1, correo, telefono, fecha_contrato",
       });
     }
 
@@ -71,14 +69,6 @@ export const createFuncionario = async (req, res) => {
       return res.status(400).json({
         message:
           "Tipo de documento inválido. Valores permitidos: TI, CC, CE, PE",
-      });
-    }
-
-    // Validación de sexo
-    const sexosValidos = ["M", "F"];
-    if (!sexosValidos.includes(sexo)) {
-      return res.status(400).json({
-        message: "Sexo inválido. Valores permitidos: M, F",
       });
     }
 
@@ -125,7 +115,6 @@ export const createFuncionario = async (req, res) => {
       apellido2,
       correo,
       telefono,
-      sexo,
       fecha_contrato,
     });
 
@@ -140,7 +129,6 @@ export const createFuncionario = async (req, res) => {
         apellido2,
         correo,
         telefono,
-        sexo,
         fecha_contrato,
       },
       affectedRows: result.affectedRows,
@@ -172,7 +160,6 @@ export const updateFuncionario = async (req, res) => {
       apellido2,
       correo,
       telefono,
-      sexo,
       fecha_contrato,
       ...rest
     } = req.body;
@@ -197,14 +184,13 @@ export const updateFuncionario = async (req, res) => {
       !tipo_doc ||
       !nombre1 ||
       !apellido1 ||
-      !sexo ||
       !correo ||
       !telefono ||
       !fecha_contrato
     ) {
       return res.status(400).json({
         message:
-          "Faltan campos requeridos para actualizar: tipo_doc, nombre1, apellido1, sexo, correo, telefono, fecha_contrato",
+          "Faltan campos requeridos para actualizar: tipo_doc, nombre1, apellido1, correo, telefono, fecha_contrato",
       });
     }
 
@@ -214,14 +200,6 @@ export const updateFuncionario = async (req, res) => {
       return res.status(400).json({
         message:
           "Tipo de documento inválido. Valores permitidos: TI, CC, CE, PE",
-      });
-    }
-
-    // Validación de sexo
-    const sexosValidos = ["M", "F"];
-    if (!sexosValidos.includes(sexo)) {
-      return res.status(400).json({
-        message: "Sexo inválido. Valores permitidos: M, F",
       });
     }
 
@@ -264,7 +242,6 @@ export const updateFuncionario = async (req, res) => {
       nombre2,
       apellido1,
       apellido2,
-      sexo,
       correo,
       telefono,
       fecha_contrato,
@@ -287,7 +264,6 @@ export const updateFuncionario = async (req, res) => {
         apellido2,
         correo,
         telefono,
-        sexo,
         fecha_contrato,
       },
     });

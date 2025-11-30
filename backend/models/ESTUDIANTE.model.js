@@ -18,28 +18,28 @@ export default {
   create: async (data) => {
     const {
       doc_estudiante,
+      id_ied,
       tipo_doc,
       nombre1,
       nombre2,
       apellido1,
       apellido2,
-      sexo,
       correo_acudiente,
       telefono_acudiente,
     } = data;
 
     const [result] = await db.query(
       `INSERT INTO estudiante 
-      (doc_estudiante, tipo_doc, nombre1, nombre2, apellido1, apellido2, sexo, correo_acudiente, telefono_acudiente)
+      (doc_estudiante, id_ied, tipo_doc, nombre1, nombre2, apellido1, apellido2, correo_acudiente, telefono_acudiente)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         doc_estudiante,
+        id_ied,
         tipo_doc,
         nombre1,
         nombre2,
         apellido1,
         apellido2,
-        sexo,
         correo_acudiente,
         telefono_acudiente,
       ]
@@ -50,34 +50,34 @@ export default {
 
   update: async (doc_estudiante, data) => {
     const {
+      id_ied,
       tipo_doc,
       nombre1,
       nombre2,
       apellido1,
       apellido2,
-      sexo,
       correo_acudiente,
       telefono_acudiente,
     } = data;
 
     const [result] = await db.query(
       `UPDATE estudiante SET 
+        id_ied = ?,
         tipo_doc = ?, 
         nombre1 = ?, 
         nombre2 = ?, 
         apellido1 = ?, 
         apellido2 = ?, 
-        sexo = ?, 
         correo_acudiente = ?, 
         telefono_acudiente = ?
       WHERE doc_estudiante = ?`,
       [
+        id_ied,
         tipo_doc,
         nombre1,
         nombre2,
         apellido1,
         apellido2,
-        sexo,
         correo_acudiente,
         telefono_acudiente,
         doc_estudiante,

@@ -7,26 +7,26 @@ export default {
     return rows;
   },
 
-  getByKeys: async (doc_estudiante, id_aula, fecha_inicio) => {
+  getByKeys: async (doc_estudiante, id_aula, fecha_inicio, fecha_fin, score_entrada, score_salida) => {
     const [rows] = await db.query(
-      "SELECT * FROM matricula WHERE doc_estudiante = ? AND id_aula = ? AND fecha_inicio = ?",
-      [doc_estudiante, id_aula, fecha_inicio]
+      "SELECT * FROM matricula WHERE doc_estudiante = ? AND id_aula = ? AND fecha_inicio = ? AND fecha_fin = ? AND score_entrada = ? AND score_salida = ?",
+      [doc_estudiante, id_aula, fecha_inicio, fecha_fin, score_entrada, score_salida]
     );
     return rows[0];
   },
 
-  create: async ({ doc_estudiante, id_aula, fecha_inicio, fecha_fin }) => {
+  create: async ({ doc_estudiante, id_aula, fecha_inicio, fecha_fin, score_entrada, score_salida }) => {
     const [result] = await db.query(
-      "INSERT INTO matricula (doc_estudiante, id_aula, fecha_inicio, fecha_fin) VALUES (?, ?, ?, ?)",
-      [doc_estudiante, id_aula, fecha_inicio, fecha_fin]
+      "INSERT INTO matricula (doc_estudiante, id_aula, fecha_inicio, fecha_fin, score_entrada, score_salida) VALUES (?, ?, ?, ?, ?, ?)",
+      [doc_estudiante, id_aula, fecha_inicio, fecha_fin, score_entrada, score_salida]
     );
     return result;
   },
 
-  updateByKeys: async (doc_estudiante, id_aula, fecha_inicio, { fecha_fin }) => {
+  updateByKeys: async (doc_estudiante, id_aula, fecha_inicio, { fecha_fin, score_entrada, score_salida }) => {
     const [result] = await db.query(
-      "UPDATE matricula SET fecha_inicio = ?, fecha_fin = ? WHERE doc_estudiante = ? AND id_aula = ? AND fecha_inicio = ?",
-      [fecha_inicio, fecha_fin, doc_estudiante, id_aula, fecha_inicio]
+      "UPDATE matricula SET fecha_inicio = ?, fecha_fin = ? WHERE doc_estudiante = ? AND id_aula = ? AND fecha_inicio = ? AND score_entrada = ? AND score_salida = ?",
+      [fecha_fin, score_entrada, score_salida, doc_estudiante, id_aula, fecha_inicio]
     );
     return result;
   },

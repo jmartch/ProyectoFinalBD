@@ -45,13 +45,13 @@ export const getIEDById = async (req, res) => {
 
 export const createIED = async (req, res) => {
   try {
-    const { nombre, telefono, duracion, hora_inicio, hora_fin, jornada } = req.body;
+    const { nombre, telefono, duracion, direccion_principal, jornada } = req.body;
 
     // Campos obligatorios (según BD: nombre y telefono, tú además exiges los demás)
-    if (!nombre || !telefono || !duracion || !hora_inicio || !hora_fin || !jornada) {
+    if (!nombre || !telefono || !duracion || !direccion_principal || !jornada) {
       return res.status(400).json({
         message:
-          "Faltan campos requeridos: nombre, telefono, duracion, hora_inicio, hora_fin, jornada"
+          "Faltan campos requeridos: nombre, telefono, duracion, direccion_principal, jornada"
       });
     }
 
@@ -70,28 +70,10 @@ export const createIED = async (req, res) => {
       });
     }
 
-    // Validación de formato de horas
-    if (!HORA_REGEX.test(hora_inicio)) {
-      return res.status(400).json({
-        message: "Formato de hora_inicio inválido. Use HH:MM:SS"
-      });
-    }
-    if (!HORA_REGEX.test(hora_fin)) {
-      return res.status(400).json({
-        message: "Formato de hora_fin inválido. Use HH:MM:SS"
-      });
-    }
-
-    // Validar que hora_fin sea posterior a hora_inicio
-    const [horaInicioHH, horaInicioMM, horaInicioSS] = hora_inicio.split(":").map(Number);
-    const [horaFinHH, horaFinMM, horaFinSS] = hora_fin.split(":").map(Number);
-
-    const inicioEnSegundos = horaInicioHH * 3600 + horaInicioMM * 60 + horaInicioSS;
-    const finEnSegundos = horaFinHH * 3600 + horaFinMM * 60 + horaFinSS;
-
-    if (finEnSegundos <= inicioEnSegundos) {
-      return res.status(400).json({
-        message: "La hora_fin debe ser posterior a la hora_inicio"
+    // Validación de longitud de dirección
+    if (direccion_principal.length < 5 || direccion_principal.length > 200) {
+      return res.status(400).json({ 
+        message: "La dirección debe tener entre 5 y 200 caracteres" 
       });
     }
 
@@ -106,8 +88,7 @@ export const createIED = async (req, res) => {
       nombre,
       telefono,
       duracion,
-      hora_inicio,
-      hora_fin,
+      direccion_principal,
       jornada
     });
 
@@ -118,8 +99,7 @@ export const createIED = async (req, res) => {
         nombre,
         telefono,
         duracion,
-        hora_inicio,
-        hora_fin,
+        direccion_principal,
         jornada
       }
     });
@@ -140,13 +120,13 @@ export const createIED = async (req, res) => {
 export const updateIED = async (req, res) => {
   try {
     const { id } = req.params;
-    const { nombre, telefono, duracion, hora_inicio, hora_fin, jornada } = req.body;
+    const { nombre, telefono, duracion, direccion_principal, jornada } = req.body;
 
     // Update completo (igual estilo que en otros controladores)
-    if (!nombre || !telefono || !duracion || !hora_inicio || !hora_fin || !jornada) {
+    if (!nombre || !telefono || !duracion || !direccion_principal || !jornada) {
       return res.status(400).json({
         message:
-          "Faltan campos requeridos: nombre, telefono, duracion, hora_inicio, hora_fin, jornada"
+          "Faltan campos requeridos: nombre, telefono, duracion, direccion_principal, jornada"
       });
     }
 
@@ -165,28 +145,10 @@ export const updateIED = async (req, res) => {
       });
     }
 
-    // Validación de formato de horas
-    if (!HORA_REGEX.test(hora_inicio)) {
-      return res.status(400).json({
-        message: "Formato de hora_inicio inválido. Use HH:MM:SS"
-      });
-    }
-    if (!HORA_REGEX.test(hora_fin)) {
-      return res.status(400).json({
-        message: "Formato de hora_fin inválido. Use HH:MM:SS"
-      });
-    }
-
-    // Validar que hora_fin sea posterior a hora_inicio
-    const [horaInicioHH, horaInicioMM, horaInicioSS] = hora_inicio.split(":").map(Number);
-    const [horaFinHH, horaFinMM, horaFinSS] = hora_fin.split(":").map(Number);
-
-    const inicioEnSegundos = horaInicioHH * 3600 + horaInicioMM * 60 + horaInicioSS;
-    const finEnSegundos = horaFinHH * 3600 + horaFinMM * 60 + horaFinSS;
-
-    if (finEnSegundos <= inicioEnSegundos) {
-      return res.status(400).json({
-        message: "La hora_fin debe ser posterior a la hora_inicio"
+    // Validación de longitud de dirección
+    if (direccion_principal.length < 5 || direccion_principal.length > 200) {
+      return res.status(400).json({ 
+        message: "La dirección debe tener entre 5 y 200 caracteres" 
       });
     }
 
@@ -201,8 +163,7 @@ export const updateIED = async (req, res) => {
       nombre,
       telefono,
       duracion,
-      hora_inicio,
-      hora_fin,
+      direccion_principal,
       jornada
     });
 
@@ -219,8 +180,7 @@ export const updateIED = async (req, res) => {
         nombre,
         telefono,
         duracion,
-        hora_inicio,
-        hora_fin,
+        direccion_principal,
         jornada
       }
     });

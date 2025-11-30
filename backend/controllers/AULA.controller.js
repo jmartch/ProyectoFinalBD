@@ -35,17 +35,17 @@ export const getAulaById = async (req, res) => {
 
 export const createAula = async (req, res) => {
   try {
-    const { id_sede, id_programa, grado } = req.body;
+    const { id_sede, id_programa, grado, capacidad } = req.body;
 
     // Validación básica
-    if (!id_sede || !id_programa || !grado) {
+    if (!id_sede || !id_programa || !grado || !capacidad) {
       return res.status(400).json({
         message:
-          "Faltan campos requeridos: id_sede, id_programa, grado",
+          "Faltan campos requeridos: id_sede, id_programa, grado, capacidad",
       });
     }
 
-    const result = await AULA.create({ id_sede, id_programa, grado });
+    const result = await AULA.create({ id_sede, id_programa, grado, capacidad });
 
     res.status(201).json({
       message: "Aula creada exitosamente",
@@ -54,6 +54,7 @@ export const createAula = async (req, res) => {
         id_sede,
         id_programa,
         grado,
+        capacidad,
       },
     });
   } catch (error) {
@@ -74,17 +75,17 @@ export const createAula = async (req, res) => {
 export const updateAula = async (req, res) => {
   try {
     const { id } = req.params;
-    const { id_sede, id_programa, grado } = req.body;
+    const { id_sede, id_programa, grado, capacidad } = req.body;
 
     // Validación básica
-    if (!id_sede || !id_programa || !grado) {
+    if (!id_sede || !id_programa || !grado || !capacidad) {
       return res.status(400).json({
         message:
-          "Faltan campos requeridos: id_sede, id_programa, grado",
+          "Faltan campos requeridos: id_sede, id_programa, grado, capacidad",
       });
     }
 
-    const result = await AULA.update(id, { id_sede, id_programa, grado });
+    const result = await AULA.update(id, { id_sede, id_programa, grado, capacidad });
 
     if (result.affectedRows === 0) {
       return res.status(404).json({
@@ -99,6 +100,7 @@ export const updateAula = async (req, res) => {
         id_sede,
         id_programa,
         grado,
+        capacidad,
       },
     });
   } catch (error) {

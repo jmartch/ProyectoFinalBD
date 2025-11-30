@@ -23,7 +23,6 @@ export default {
       nombre2,
       apellido1,
       apellido2,
-      sexo,
       correo,
       telefono,
       fecha_contrato,
@@ -31,8 +30,8 @@ export default {
 
     const [result] = await db.query(
       `INSERT INTO funcionario 
-      (doc_funcionario, tipo_doc, nombre1, nombre2, apellido1, apellido2, sexo, correo, telefono, fecha_contrato)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      (doc_funcionario, tipo_doc, nombre1, nombre2, apellido1, apellido2, correo, telefono, fecha_contrato)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         doc_funcionario,
         tipo_doc,
@@ -40,7 +39,6 @@ export default {
         nombre2,
         apellido1,
         apellido2,
-        sexo,
         correo,
         telefono,
         fecha_contrato,
@@ -57,7 +55,6 @@ export default {
       nombre2,
       apellido1,
       apellido2,
-      sexo,
       correo,
       telefono,
       fecha_contrato,
@@ -70,7 +67,6 @@ export default {
         nombre2 = ?, 
         apellido1 = ?, 
         apellido2 = ?, 
-        sexo = ?, 
         correo = ?, 
         telefono = ?, 
         fecha_contrato = ?
@@ -81,7 +77,6 @@ export default {
         nombre2,
         apellido1,
         apellido2,
-        sexo,
         correo,
         telefono,
         fecha_contrato,

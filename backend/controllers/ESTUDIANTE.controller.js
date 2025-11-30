@@ -37,6 +37,7 @@ export const createEstudiante = async (req, res) => {
   try {
     const {
       doc_estudiante,
+      id_ied,
       tipo_doc,
       nombre1,
       nombre2,
@@ -44,22 +45,21 @@ export const createEstudiante = async (req, res) => {
       apellido2,
       correo_acudiente,
       telefono_acudiente,
-      sexo,
     } = req.body;
 
     // Campos obligatorios (nombre2 y apellido2 pueden ser opcionales si quieres)
     if (
       !doc_estudiante ||
+      !id_ied ||
       !tipo_doc ||
       !nombre1 ||
       !apellido1 ||
-      !sexo ||
       !correo_acudiente ||
       !telefono_acudiente
     ) {
       return res.status(400).json({
         message:
-          "Faltan campos requeridos: doc_estudiante, tipo_doc, nombre1, apellido1, sexo, correo_acudiente, telefono_acudiente",
+          "Faltan campos requeridos: doc_estudiante, id_ied, tipo_doc, nombre1, apellido1, correo_acudiente, telefono_acudiente",
       });
     }
 
@@ -69,14 +69,6 @@ export const createEstudiante = async (req, res) => {
       return res.status(400).json({
         message:
           "Tipo de documento inválido. Valores permitidos: TI, CC, CE, RC, PE",
-      });
-    }
-
-    // Validación de sexo
-    const sexosValidos = ["M", "F"];
-    if (!sexosValidos.includes(sexo)) {
-      return res.status(400).json({
-        message: "Sexo inválido. Valores permitidos: M, F",
       });
     }
 
@@ -99,6 +91,7 @@ export const createEstudiante = async (req, res) => {
 
     const result = await ESTUDIANTE.create({
       doc_estudiante,
+      id_ied,
       tipo_doc,
       nombre1,
       nombre2,
@@ -106,13 +99,13 @@ export const createEstudiante = async (req, res) => {
       apellido2,
       correo_acudiente,
       telefono_acudiente,
-      sexo,
     });
 
     res.status(201).json({
       message: "Estudiante creado exitosamente",
       data: {
         doc_estudiante,
+        id_ied,
         tipo_doc,
         nombre1,
         nombre2,
@@ -120,11 +113,20 @@ export const createEstudiante = async (req, res) => {
         apellido2,
         correo_acudiente,
         telefono_acudiente,
-        sexo,
       },
       affectedRows: result.affectedRows,
     });
   } catch (error) {
+    // Manejo de llave foránea inválida (IED no existe)
+    if (error.code === "ER_NO_REFERENCED_ROW_2") {
+      return res.status(404).json({ 
+        message: "La IED especificada no existe" 
+      });
+    }
+    res.status(500).json({ 
+      message: "Error al crear la sede", 
+      error: error.message 
+    });
     // Manejo de documento duplicado
     if (error.code === "ER_DUP_ENTRY") {
       return res.status(409).json({
@@ -143,12 +145,12 @@ export const updateEstudiante = async (req, res) => {
     const { doc } = req.params;
 
     const {
+      id_ied,
       tipo_doc,
       nombre1,
       nombre2,
       apellido1,
       apellido2,
-      sexo,
       correo_acudiente,
       telefono_acudiente,
       doc_estudiante, // por si viene en body lo bloqueamos
@@ -172,16 +174,16 @@ export const updateEstudiante = async (req, res) => {
 
     // Validar que todos los campos necesarios estén presentes (update completo)
     if (
+      !id_ied ||
       !tipo_doc ||
       !nombre1 ||
       !apellido1 ||
-      !sexo ||
       !correo_acudiente ||
       !telefono_acudiente
     ) {
       return res.status(400).json({
         message:
-          "Faltan campos requeridos para actualizar: tipo_doc, nombre1, apellido1, sexo, correo_acudiente, telefono_acudiente",
+          "Faltan campos requeridos para actualizar: id_ied, tipo_doc, nombre1, apellido1, correo_acudiente, telefono_acudiente",
       });
     }
 
@@ -191,14 +193,6 @@ export const updateEstudiante = async (req, res) => {
       return res.status(400).json({
         message:
           "Tipo de documento inválido. Valores permitidos: TI, CC, CE, RC, PE",
-      });
-    }
-
-    // Validación de sexo
-    const sexosValidos = ["M", "F"];
-    if (!sexosValidos.includes(sexo)) {
-      return res.status(400).json({
-        message: "Sexo inválido. Valores permitidos: M, F",
       });
     }
 
@@ -220,12 +214,12 @@ export const updateEstudiante = async (req, res) => {
     }
 
     const result = await ESTUDIANTE.update(doc, {
+      id_ied,
       tipo_doc,
       nombre1,
       nombre2,
       apellido1,
       apellido2,
-      sexo,
       correo_acudiente,
       telefono_acudiente,
     });
@@ -240,17 +234,27 @@ export const updateEstudiante = async (req, res) => {
       message: "Estudiante actualizado exitosamente",
       data: {
         doc_estudiante: doc,
+        id_ied,
         tipo_doc,
         nombre1,
         nombre2,
         apellido1,
         apellido2,
-        sexo,
         correo_acudiente,
         telefono_acudiente,
       },
     });
   } catch (error) {
+    // Manejo de llave foránea inválida
+    if (error.code === "ER_NO_REFERENCED_ROW_2") {
+      return res.status(404).json({ 
+        message: "La IED especificada no existe" 
+      });
+    }
+    res.status(500).json({ 
+      message: "Error al actualizar la sede", 
+      error: error.message 
+    });
     res.status(500).json({
       message: "Error al actualizar el estudiante",
       error: error.message,

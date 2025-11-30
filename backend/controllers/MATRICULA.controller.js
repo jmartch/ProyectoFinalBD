@@ -35,12 +35,12 @@ export const getMatriculaByKeys = async (req, res) => {
 
 export const createMatricula = async (req, res) => {
   try {
-    const { id_aula, doc_estudiante, fecha_inicio, fecha_fin } = req.body;
+    const { id_aula, doc_estudiante, fecha_inicio, fecha_fin, score_entrada, score_salida } = req.body;
     
     // Validación de campos obligatorios
-    if (!id_aula || !doc_estudiante || !fecha_inicio) {
+    if (!id_aula || !doc_estudiante || !fecha_inicio || !score_entrada) {
       return res.status(400).json({ 
-        message: "Faltan campos requeridos: id_aula, doc_estudiante, fecha_inicio" 
+        message: "Faltan campos requeridos: id_aula, doc_estudiante, fecha_inicio, score_entrada" 
       });
     }
 
@@ -65,7 +65,9 @@ export const createMatricula = async (req, res) => {
       id_aula, 
       doc_estudiante, 
       fecha_inicio,
-      fecha_fin 
+      fecha_fin,
+      score_entrada,
+      score_salida 
     });
     
     res.status(201).json({ 
@@ -74,7 +76,9 @@ export const createMatricula = async (req, res) => {
         id_aula, 
         doc_estudiante, 
         fecha_inicio,
-        fecha_fin
+        fecha_fin,
+        score_entrada,
+        score_salida
       }
     });
   } catch (error) {
@@ -100,7 +104,7 @@ export const createMatricula = async (req, res) => {
 export const updateMatriculaByKeys = async (req, res) => {
   try {
     const { id_aula, doc_estudiante, fecha_inicio } = req.params;
-    const { fecha_fin } = req.body;
+    const { fecha_fin, score_entrada, score_salida } = req.body;
     
     // Validar que haya datos para actualizar
     if (!fecha_fin) {
@@ -126,7 +130,7 @@ export const updateMatriculaByKeys = async (req, res) => {
       });
     }
     
-    const result = await Matricula.updateByKeys(id_aula, doc_estudiante, fecha_inicio, { fecha_fin });
+    const result = await Matricula.updateByKeys(id_aula, doc_estudiante, fecha_inicio, { fecha_fin, score_entrada, score_salida });
     
     if (result.affectedRows === 0) {
       return res.status(404).json({ 
@@ -136,7 +140,7 @@ export const updateMatriculaByKeys = async (req, res) => {
     
     res.json({ 
       message: "Matrícula actualizada exitosamente",
-      data: { id_aula, doc_estudiante, fecha_inicio, fecha_fin }
+      data: { id_aula, doc_estudiante, fecha_inicio, fecha_fin, score_entrada, score_salida }
     });
   } catch (error) {
     res.status(500).json({ 
