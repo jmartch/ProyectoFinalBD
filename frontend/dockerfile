@@ -1,0 +1,43 @@
+# Etapa de desarrollo
+FROM node:20-alpine AS dev
+
+WORKDIR /app
+
+COPY package*.json ./
+
+RUN npm install
+
+COPY . .
+
+EXPOSE 5173
+
+# Corregido: usa sh -c para ejecutar el comando correctamente
+CMD ["sh", "-c", "npm run dev -- --host 0.0.0.0"]
+
+
+# Etapa de build para producción
+FROM node:20-alpine AS build
+
+WORKDIR /app
+
+COPY package*.json ./
+
+RUN npm install
+
+COPY . .
+
+RUN npm run build
+
+
+# Etapa de producción
+FROM node:20-alpine AS prod
+
+WORKDIR /app
+
+RUN npm install -g serve
+
+COPY --from=build /app/dist ./dist
+
+EXPOSE 5173
+
+CMD ["serve", "-s", "dist", "-l", "5173"]
