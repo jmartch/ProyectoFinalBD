@@ -3,32 +3,28 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '../ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '../ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
 import { Badge } from '../ui/badge';
 import { institutions, sedes } from '../../lib/mockData';
 import { Plus, Building2, MapPin } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 
 export function InstitutionsManager() {
   const [selectedInstitution, setSelectedInstitution] = useState<string | null>(null);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [isAddSedeDialogOpen, setIsAddSedeDialogOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState('details');
 
-  const selectedInst = institutions.find((i) => i.id === selectedInstitution);
-  const institutionSedes = sedes.filter((s) => s.institutionId === selectedInstitution);
+  const selectedInst = institutions.find(i => i.id === selectedInstitution);
+  const institutionSedes = sedes.filter(s => s.institutionId === selectedInstitution);
 
   return (
-    <div className="space-y-6 max-w-6xl mx-auto">
+    <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-semibold">Gestión de Instituciones</h2>
+          <h2 className="text-2xl">Gestión de Instituciones</h2>
           <p className="text-gray-600 mt-1">
             Administrar Instituciones Educativas del Distrito (IED) y sus sedes
           </p>
@@ -40,21 +36,18 @@ export function InstitutionsManager() {
               Nueva Institución
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogContent className="max-w-2xl">
             <DialogHeader>
               <DialogTitle>Registrar Nueva Institución</DialogTitle>
               <DialogDescription>
                 Ingrese la información de la institución educativa
               </DialogDescription>
             </DialogHeader>
-            <form
-              className="space-y-4"
-              onSubmit={(e) => {
-                e.preventDefault();
-                setIsAddDialogOpen(false);
-              }}
-            >
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <form className="space-y-4" onSubmit={(e) => {
+              e.preventDefault();
+              setIsAddDialogOpen(false);
+            }}>
+              <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="code">Código</Label>
                   <Input id="code" placeholder="IED001" required />
@@ -64,13 +57,13 @@ export function InstitutionsManager() {
                   <Input id="name" placeholder="IED San José" required />
                 </div>
               </div>
-
+              
               <div className="space-y-2">
                 <Label htmlFor="address">Dirección Principal</Label>
                 <Input id="address" placeholder="Calle 123 #45-67" required />
               </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              
+              <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="phone">Teléfono</Label>
                   <Input id="phone" type="tel" placeholder="6015551234" required />
@@ -82,11 +75,7 @@ export function InstitutionsManager() {
               </div>
 
               <div className="flex justify-end gap-2 pt-4">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setIsAddDialogOpen(false)}
-                >
+                <Button type="button" variant="outline" onClick={() => setIsAddDialogOpen(false)}>
                   Cancelar
                 </Button>
                 <Button type="submit">Guardar Institución</Button>
@@ -100,9 +89,7 @@ export function InstitutionsManager() {
         {/* List of Institutions */}
         <Card className="lg:col-span-1">
           <CardHeader>
-            <CardTitle className="text-base font-semibold">
-              Instituciones Registradas
-            </CardTitle>
+            <CardTitle>Instituciones Registradas</CardTitle>
             <CardDescription>{institutions.length} instituciones</CardDescription>
           </CardHeader>
           <CardContent>
@@ -111,7 +98,7 @@ export function InstitutionsManager() {
                 <button
                   key={inst.id}
                   onClick={() => setSelectedInstitution(inst.id)}
-                  className={`w-full text-left p-3 rounded-lg border transition-colors focus:outline-none focus:ring-2 focus:ring-blue-200 ${
+                  className={`w-full text-left p-3 rounded-lg border transition-colors ${
                     selectedInstitution === inst.id
                       ? 'bg-blue-50 border-blue-300'
                       : 'hover:bg-gray-50 border-gray-200'
@@ -135,18 +122,16 @@ export function InstitutionsManager() {
         {/* Institution Details */}
         <Card className="lg:col-span-2">
           <CardHeader>
-            <CardTitle className="text-base font-semibold">
+            <CardTitle>
               {selectedInst ? selectedInst.name : 'Seleccione una institución'}
             </CardTitle>
             <CardDescription>
-              {selectedInst
-                ? 'Detalles y sedes de la institución'
-                : 'Seleccione una institución de la lista para ver sus detalles'}
+              {selectedInst ? 'Detalles y sedes de la institución' : 'Seleccione una institución de la lista para ver sus detalles'}
             </CardDescription>
           </CardHeader>
           <CardContent>
             {selectedInst ? (
-              <Tabs defaultValue="details">
+              <Tabs defaultValue="details" value={activeTab} onValueChange={setActiveTab}>
                 <TabsList className="mb-4">
                   <TabsTrigger value="details">
                     <Building2 className="w-4 h-4 mr-2" />
@@ -159,7 +144,7 @@ export function InstitutionsManager() {
                 </TabsList>
 
                 <TabsContent value="details" className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-2 gap-4">
                     <div>
                       <Label className="text-xs text-gray-500">Código</Label>
                       <p>{selectedInst.code}</p>
@@ -179,7 +164,7 @@ export function InstitutionsManager() {
                     <p>{selectedInst.mainAddress}</p>
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-2 gap-4">
                     <div>
                       <Label className="text-xs text-gray-500">Teléfono</Label>
                       <p>{selectedInst.phone}</p>
@@ -194,7 +179,7 @@ export function InstitutionsManager() {
                 <TabsContent value="sedes">
                   <div className="space-y-4">
                     <div className="flex justify-end">
-                      <Button size="sm">
+                      <Button size="sm" onClick={() => setIsAddSedeDialogOpen(true)}>
                         <Plus className="w-4 h-4 mr-2" />
                         Agregar Sede
                       </Button>
@@ -241,6 +226,72 @@ export function InstitutionsManager() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Add Sede Dialog */}
+      <Dialog open={isAddSedeDialogOpen} onOpenChange={setIsAddSedeDialogOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Registrar Nueva Sede</DialogTitle>
+            <DialogDescription>
+              Agregar una nueva sede para {selectedInst?.name}
+            </DialogDescription>
+          </DialogHeader>
+          <form className="space-y-4" onSubmit={(e) => {
+            e.preventDefault();
+            // Aquí se implementaría la lógica para guardar la sede
+            console.log('Guardando nueva sede...');
+            setIsAddSedeDialogOpen(false);
+          }}>
+            <div className="space-y-2">
+              <Label htmlFor="sede-name">Nombre de la Sede</Label>
+              <Input 
+                id="sede-name" 
+                placeholder="Ej: Sede Principal, Sede Norte, etc." 
+                required 
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="sede-address">Dirección</Label>
+              <Input 
+                id="sede-address" 
+                placeholder="Calle 123 #45-67" 
+                required 
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="sede-type">Tipo de Sede</Label>
+              <Select defaultValue="secondary">
+                <SelectTrigger id="sede-type">
+                  <SelectValue placeholder="Seleccione el tipo de sede" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="main">Sede Principal</SelectItem>
+                  <SelectItem value="secondary">Sede Secundaria</SelectItem>
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-gray-500 mt-1">
+                La sede principal es la ubicación central de la institución
+              </p>
+            </div>
+
+            <div className="flex justify-end gap-2 pt-4 border-t">
+              <Button 
+                type="button" 
+                variant="outline" 
+                onClick={() => setIsAddSedeDialogOpen(false)}
+              >
+                Cancelar
+              </Button>
+              <Button type="submit">
+                <Plus className="w-4 h-4 mr-2" />
+                Guardar Sede
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

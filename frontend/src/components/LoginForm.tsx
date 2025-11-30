@@ -1,10 +1,17 @@
 import { useState } from "react";
-import logo from "../assets/logo.png";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 import { Alert, AlertDescription } from "./ui/alert";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 import { login, setCurrentUser, AuthUser } from "../lib/auth";
+import { users, persons, documentTypes } from "../lib/mockData";
+import { UserRole } from "../types";
+import { UserPlus, LogIn } from "lucide-react";
+import GlobalEnglishImage from "../assets/GLOBAL_ENGLISH.png";
+
+
 
 interface LoginFormProps {
   onLogin: (authUser: AuthUser) => void;
@@ -14,6 +21,19 @@ export function LoginForm({ onLogin }: LoginFormProps) {
   const [user, setUser] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+
+  // Registration fields
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [documentType, setDocumentType] = useState("");
+  const [documentNumber, setDocumentNumber] = useState("");
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
+  const [registerPassword, setRegisterPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [role, setRole] = useState<UserRole>(UserRole.TUTOR);
+  const [registerError, setRegisterError] = useState("");
+  const [registerSuccess, setRegisterSuccess] = useState("");
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -28,114 +48,169 @@ export function LoginForm({ onLogin }: LoginFormProps) {
     }
   };
 
+  const handleRegister = (e: React.FormEvent) => {
+    e.preventDefault();
+    setRegisterError("");
+    setRegisterSuccess("");
+
+    // Validaciones
+    if (registerPassword !== confirmPassword) {
+      setRegisterError("Las contraseñas no coinciden");
+      return;
+    }
+
+    if (registerPassword.length < 6) {
+      setRegisterError("La contraseña debe tener al menos 6 caracteres");
+      return;
+    }
+
+    // Verificar si el email ya existe
+    if (users.find(u => u.email === email)) {
+      setRegisterError("Este email ya está registrado");
+      return;
+    }
+
+    // Verificar si el documento ya existe
+    if (persons.find(p => p.documentNumber === documentNumber)) {
+      setRegisterError("Este número de documento ya está registrado");
+      return;
+    }
+
+    // Crear nuevo usuario (en producción esto se haría en el backend)
+    const newPersonId = `person-${Date.now()}`;
+    const newUserId = `user-${Date.now()}`;
+
+    const newPerson = {
+      id: newPersonId,
+      firstName,
+      lastName,
+      documentTypeId: documentType,
+      documentNumber,
+      email,
+      phone,
+      role,
+      isActive: true,
+      hiredDate: new Date(),
+    };
+
+    const newUser = {
+      id: newUserId,
+      email,
+      password: registerPassword,
+      personId: newPersonId,
+      role,
+      createdAt: new Date(),
+    };
+
+    // Agregar a los arrays de mock data
+    persons.push(newPerson);
+    users.push(newUser);
+
+    setRegisterSuccess("¡Registro exitoso! Ya puedes iniciar sesión.");
+
+    // Limpiar formulario
+    setFirstName("");
+    setLastName("");
+    setDocumentType("");
+    setDocumentNumber("");
+    setEmail("");
+    setPhone("");
+    setRegisterPassword("");
+    setConfirmPassword("");
+    setRole(UserRole.TUTOR);
+  };
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#f4f4ff] px-4 py-10">
-      {/* CARD PRINCIPAL */}
-      <div className="w-full max-w-6xl bg-white rounded-3xl shadow-[0_24px_80px_rgba(148,163,184,0.6)] overflow-hidden grid grid-cols-1 md:grid-cols-2">
-        {/* PANEL IZQUIERDO: gradiente + LOGO ENORME */}
-<div className="hidden md:flex flex-col items-center justify-center bg-gradient-to-br from-[#4c6fff] via-[#7b5cff] to-[#4ac4ff] px-10 py-10">
-  <img
-    src={logo}
-    alt="Global English"
-    className="logo-float w-auto 
-               h-[14rem] md:h-[18rem] lg:h-[20rem] xl:h-[22rem]
-               drop-shadow-[0_40px_80px_rgba(15,23,42,0.75)]"
-  />
-  <p className="mt-8 text-sm lg:text-base text-white/90 text-center max-w-sm">
-    Plataforma de gestión académica para el programa{" "}
-    <span className="font-semibold">GLOBAL ENGLISH</span>.
-  </p>
-</div>
+    <div className="min-h-screen flex items-center justify-center bg-[#f4f4ff] p-6">
+      {/* MAIN CARD */}
+      <div className="w-full max-w-6xl min-h-[700px] bg-white rounded-xl shadow-2xl p-4 grid grid-cols-1 md:grid-cols-2 gap-12">
+
+        {/* LEFT PANEL */}
+        <div
+          className="
+    hidden md:flex
+    flex-col items-center justify-center
+    rounded-xl p-4 shadow-lg 
+    bg-gradient-to-br from-indigo-600 via-purple-500 to-blue-400
+    bg-cover bg-center bg-no-repeat
+  "
+        >
+          <img
+            src={GlobalEnglishImage}
+            alt="Global English"
+            className="w-4/5 h-auto object-contain drop-shadow-xl"
+          />
+        </div>
+
+        {/* RIGHT PANEL */}
+        <div className="flex flex-col justify-center px-6 md:px-12">
+
+          {/* Program Title */}
+          <h1 className="text-4xl font-extrabold text-indigo-700 tracking-tight mb-6">
+            GLOBAL ENGLISH
+          </h1>
+
+          <Tabs defaultValue="login" className="w-full max-w-md">
+            
+
+            
+
+            {/* LOGIN TAB */}
+            <TabsContent value="login">
+              <h2 className="text-2xl font-bold mb-1">Welcome Back</h2>
+              <p className="text-gray-600 mb-8">
+                Please enter your credentials to access the platform.
+              </p>
+
+              <form onSubmit={handleSubmit} className="space-y-5">
+
+                {error && (
+                  <Alert variant="destructive">
+                    <AlertDescription>{error}</AlertDescription>
+                  </Alert>
+                )}
+
+                <div className="space-y-2">
+                  <Label htmlFor="user">Usuario</Label>
+                  <Input
+                    id="user"
+                    type="text"
+                    value={user}
+                    onChange={(e) => setUser(e.target.value)}
+                    required
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="password">Contraseña</Label>
+                  <Input
+                    id="password"
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                  />
+                </div>
+
+                <Button
+                  type="submit"
+                  className="w-full text-white bg-indigo-600 hover:bg-indigo-700 transition"
+                >
+                  Sign In
+                </Button>
+              </form>
+
+              {/* TEST CREDENTIALS */}
+              <div className="mt-10 p-4 bg-indigo-50 rounded-xl text-sm">
+                <p className="mb-2 font-medium">Credenciales de prueba:</p>
+                <p><strong>Administrador:</strong> admin@globalenglish.edu / admin123</p>
+                <p><strong>Administrativo:</strong> carlos.admin@globalenglish.edu / admin123</p>
+                <p><strong>Tutor:</strong> ana.tutor@globalenglish.edu / tutor123</p>
+              </div>
+            </TabsContent>
 
 
-        {/* PANEL DERECHO (FORMULARIO) */}
-        <div className="flex flex-col justify-center px-7 py-8 md:px-10 lg:px-14 lg:py-12">
-          <div className="mb-6">
-            <p className="text-xs font-semibold tracking-[0.25em] text-indigo-500 uppercase mb-1">
-              GLOBAL ENGLISH
-            </p>
-            <h2 className="text-3xl md:text-4xl font-extrabold text-indigo-800 tracking-tight">
-              Welcome Back
-            </h2>
-            <p className="mt-2 text-sm text-slate-600">
-              Ingresa tus credenciales para acceder a la plataforma.
-            </p>
-          </div>
-
-          <form onSubmit={handleSubmit} className="space-y-5 max-w-sm">
-            {error && (
-              <Alert variant="destructive">
-                <AlertDescription>{error}</AlertDescription>
-              </Alert>
-            )}
-
-            <div className="space-y-2">
-              <Label htmlFor="user" className="text-sm font-medium text-slate-700">
-                Usuario
-              </Label>
-              <Input
-                id="user"
-                type="text"
-                value={user}
-                onChange={(e) => setUser(e.target.value)}
-                required
-                className="h-11 rounded-xl border border-slate-300 bg-slate-50 text-sm placeholder:text-slate-400
-                           focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:border-indigo-500"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label
-                htmlFor="password"
-                className="text-sm font-medium text-slate-700"
-              >
-                Contraseña
-              </Label>
-              <Input
-                id="password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                className="h-11 rounded-xl border border-slate-300 bg-slate-50 text-sm placeholder:text-slate-400
-                           focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:border-indigo-500"
-              />
-            </div>
-
-            <Button
-              type="submit"
-              className="w-full h-11 rounded-xl font-semibold text-sm text-white
-                         bg-gradient-to-r from-[#4c6fff] via-[#7b5cff] to-[#4c6fff]
-                         transition-transform duration-200
-                         hover:scale-[1.02] active:scale-[0.96]"
-            >
-              Sign In
-            </Button>
-          </form>
-
-          {/* CREDENCIALES DE PRUEBA */}
-          <div className="mt-8 max-w-sm rounded-2xl bg-indigo-50 border border-indigo-100 px-4 py-4 text-xs text-slate-800">
-            <p className="mb-2 font-semibold text-indigo-700">
-              Credenciales de prueba
-            </p>
-            <ul className="space-y-1">
-              <li>
-                <span className="font-semibold">Administrador:</span>{" "}
-                admin@globalenglish.edu /{" "}
-                <span className="font-mono">admin123</span>
-              </li>
-              <li>
-                <span className="font-semibold">Administrativo:</span>{" "}
-                carlos.admin@globalenglish.edu /{" "}
-                <span className="font-mono">admin123</span>
-              </li>
-              <li>
-                <span className="font-semibold">Tutor:</span>{" "}
-                ana.tutor@globalenglish.edu /{" "}
-                <span className="font-mono">tutor123</span>
-              </li>
-            </ul>
-          </div>
+          </Tabs>
         </div>
       </div>
     </div>

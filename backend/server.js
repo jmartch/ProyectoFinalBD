@@ -25,7 +25,7 @@ import detalleNotaRoutes from './routes/DETALLE_NOTA.js';
 import aulaTutorRoutes from "./routes/AULA_TUTOR.js";
 import programaRoutes from "./routes/PROGRAMA.js";
 import semanaRoutes from "./routes/SEMANA.js";
-
+import calendarRoutes from './routes/CALENDAR.js';
 
 dotenv.config();
 const app = express();
@@ -56,6 +56,7 @@ app.use('/api/detalle_nota', detalleNotaRoutes);
 app.use("/api/aula-tutor", aulaTutorRoutes);
 app.use("/api/programas", programaRoutes);
 app.use("/api/semanas", semanaRoutes);
+app.use('/api/calendar', calendarRoutes);
 
 
 // Health check
