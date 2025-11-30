@@ -1,20 +1,9 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { AuthUser, canAccessAdminFunctions } from '../../lib/auth';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
-import { 
-  aulas, 
-  tutorAssignments, 
-  institutions, 
-  sedes, 
-  schedules, 
-  students, 
-  studentAulaAssignments,
-  classAttendances,
-  persons
-} from '../../lib/mockData';
 import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Clock, MapPin, Users, Filter } from 'lucide-react';
 import { Badge } from '../ui/badge';
-import { ProgramType, DayOfWeek, UserRole } from '../../types';
+import { ProgramType, DayOfWeek } from '../../types';
 import { Button } from '../ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
@@ -28,7 +17,7 @@ interface CalendarEvent {
   id: string;
   title: string;
   aulaCode: string;
-  aulaId: string;
+  aulaId: number;
   institutionName: string;
   sedeName: string;
   startTime: string;
@@ -39,116 +28,271 @@ interface CalendarEvent {
   grade: string;
 }
 
+interface CalendarFiltersResponse {
+  userRole: string;
+  programs: { id_programa: number; nombre_programa: string }[];
+  institutions: { id_ied: number; nombre: string }[];
+  aulas: { id_aula: number; code: string; grade: number; programType: ProgramType }[];
+  tutors?: { id_tutor: number; fullName: string }[];
+  students?: { doc_estudiante: number; fullName: string }[];
+}
+
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+
+const mapBackendDayOfWeek = (raw: any): DayOfWeek | null => {
+  if (raw === null || raw === undefined) return null;
+
+  if (typeof raw === 'number') {
+    switch (raw) {
+      case 1: return DayOfWeek.LUNES;
+      case 2: return DayOfWeek.MARTES;
+      case 3: return DayOfWeek.MIERCOLES;
+      case 4: return DayOfWeek.JUEVES;
+      case 5: return DayOfWeek.VIERNES;
+      case 6: return DayOfWeek.SABADO;
+      case 7: 
+        
+    
+        return DayOfWeek.SABADO;
+
+        console.warn('⚠️ dayOfWeek numérico fuera de rango:', raw);
+        return null;
+    }
+  }
+
+
+  if (typeof raw === 'string') {
+    const normalized = raw.trim().toUpperCase();
+
+    switch (normalized) {
+      case 'LUNES':
+      case 'MONDAY':
+      case 'MON':
+      case 'L':
+        return DayOfWeek.LUNES;
+
+      case 'MARTES':
+      case 'TUESDAY':
+      case 'TUE':
+      case 'MAR':
+        return DayOfWeek.MARTES;
+
+      case 'MIERCOLES':
+      case 'MIÉRCOLES':
+      case 'WEDNESDAY':
+      case 'WED':
+        return DayOfWeek.MIERCOLES;
+
+      case 'JUEVES':
+      case 'THURSDAY':
+      case 'THU':
+        return DayOfWeek.JUEVES;
+
+      case 'VIERNES':
+      case 'FRIDAY':
+      case 'FRI':
+        return DayOfWeek.VIERNES;
+
+      case 'SABADO':
+      case 'SÁBADO':
+      case 'SATURDAY':
+      case 'SAT':
+        return DayOfWeek.SABADO;
+
+      case 'DOMINGO':
+      case 'SUNDAY':
+      case 'SUN':
+        // Igual que arriba: decide qué hacer con domingo.
+        // O lo mapeas a SABADO:
+        return DayOfWeek.SABADO;
+        // O lo ignoras:
+        // return null;
+
+      default:
+        console.warn('⚠️ dayOfWeek string no reconocido desde backend:', raw);
+        return null;
+    }
+  }
+
+  console.warn('⚠️ dayOfWeek tipo no soportado:', raw);
+  return null;
+};
+
+const mapBackendProgramType = (raw: any): ProgramType => {
+  if (!raw) return ProgramType.INSIDECLASSROOM;
+  const normalized = String(raw).trim().toUpperCase();
+
+  if (normalized === 'OUTSIDECLASSROOM') return ProgramType.OUTSIDECLASSROOM;
+  return ProgramType.INSIDECLASSROOM;
+};
+
 export function ScheduleCalendar({ authUser }: ScheduleCalendarProps) {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState(new Date());
+
   const [filterProgram, setFilterProgram] = useState<string>('ALL');
   const [filterInstitution, setFilterInstitution] = useState<string>('ALL');
   const [filterAula, setFilterAula] = useState<string>('ALL');
   const [filterTutor, setFilterTutor] = useState<string>('ALL');
   const [filterStudent, setFilterStudent] = useState<string>('ALL');
+
+  const [events, setEvents] = useState<CalendarEvent[]>([]);
+  const [filtersData, setFiltersData] = useState<CalendarFiltersResponse | null>(null);
+  const [loadingEvents, setLoadingEvents] = useState(false);
+  const [loadingFilters, setLoadingFilters] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
   const isAdmin = canAccessAdminFunctions(authUser.user.role);
 
-  // Get tutor's assigned aulas and create events
-  const getEvents = (): CalendarEvent[] => {
-    const events: CalendarEvent[] = [];
-    
-    // Si es admin, mostrar todas las aulas; si es tutor, solo sus aulas
-    let relevantAulas = isAdmin 
-      ? aulas.filter(a => a.isActive)
-      : tutorAssignments
-          .filter(ta => ta.tutorId === authUser.person.id && ta.isActive)
-          .map(ta => aulas.find(a => a.id === ta.aulaId))
-          .filter(Boolean);
-
-    // Apply filters
-    if (filterProgram !== 'ALL') {
-      relevantAulas = relevantAulas.filter(a => a?.programType === filterProgram);
-    }
-    if (filterInstitution !== 'ALL') {
-      relevantAulas = relevantAulas.filter(a => a?.institutionId === filterInstitution);
-    }
-    if (filterAula !== 'ALL') {
-      relevantAulas = relevantAulas.filter(a => a?.id === filterAula);
-    }
-    if (filterTutor !== 'ALL') {
-      const tutorAulaIds = tutorAssignments
-        .filter(ta => ta.tutorId === filterTutor && ta.isActive)
-        .map(ta => ta.aulaId);
-      relevantAulas = relevantAulas.filter(a => a && tutorAulaIds.includes(a.id));
-    }
-    if (filterStudent !== 'ALL') {
-      const studentAulaIds = studentAulaAssignments
-        .filter(sa => sa.studentId === filterStudent && sa.isActive)
-        .map(sa => sa.aulaId);
-      relevantAulas = relevantAulas.filter(a => a && studentAulaIds.includes(a.id));
-    }
-
-    relevantAulas.forEach(aula => {
-      if (!aula) return;
-      
-      const institution = institutions.find(i => i.id === aula.institutionId);
-      const sede = sedes.find(s => s.id === aula.sedeId);
-      const aulaSchedules = schedules.filter(s => s.aulaId === aula.id && s.isActive);
-      const aulaStudents = studentAulaAssignments
-        .filter(sa => sa.aulaId === aula.id && sa.isActive)
-        .map(sa => students.find(s => s.id === sa.studentId))
-        .filter(Boolean);
-
-      aulaSchedules.forEach(schedule => {
-        events.push({
-          id: `${aula.id}-${schedule.id}`,
-          title: aula.code,
-          aulaCode: aula.code,
-          aulaId: aula.id,
-          institutionName: institution?.name || '',
-          sedeName: sede?.name || '',
-          startTime: schedule.startTime,
-          endTime: schedule.endTime,
-          dayOfWeek: schedule.dayOfWeek,
-          programType: aula.programType,
-          studentsCount: aulaStudents.length,
-          grade: aula.grade,
-        });
-      });
-    });
-
-    return events;
+  // Helper para sacar doc_funcionario desde authUser
+  const getDocFuncionario = () => {
+    // Ajusta estos nombres según cómo tengas construido tu AuthUser
+    // @ts-ignore
+    return authUser.person?.doc_funcionario ?? authUser.person?.document ?? authUser.person?.id;
   };
 
-  const events = getEvents();
+  // 🔹 1) Cargar filtros desde el backend
+  useEffect(() => {
+    const fetchFilters = async () => {
+      try {
+        setLoadingFilters(true);
+        setError(null);
 
-  // Helper functions for calendar
+        const roleParam = isAdmin ? 'ADMIN' : 'TUTOR';
+        const params = new URLSearchParams({ role: roleParam });
+
+        if (!isAdmin) {
+          const doc = getDocFuncionario();
+          if (doc) params.append('doc_funcionario', String(doc));
+        }
+
+        const url = `${API_BASE_URL}/api/calendar/filters?${params.toString()}`;
+        console.log('📡 [CALENDAR FILTERS] GET', url);
+
+        const res = await fetch(url);
+        if (!res.ok) throw new Error(`Error al cargar filtros (${res.status})`);
+
+        const data: CalendarFiltersResponse = await res.json();
+        console.log('✅ [CALENDAR FILTERS] data:', data);
+
+        setFiltersData(data);
+      } catch (err: any) {
+        console.error(err);
+        setError(err.message || 'Error cargando filtros');
+      } finally {
+        setLoadingFilters(false);
+      }
+    };
+
+    fetchFilters();
+  }, [isAdmin, authUser]);
+
+  // 🔹 2) Cargar eventos según rol + filtros
+  useEffect(() => {
+    const fetchEvents = async () => {
+      try {
+        setLoadingEvents(true);
+        setError(null);
+
+        const roleParam = isAdmin ? 'ADMIN' : 'TUTOR';
+        const params = new URLSearchParams({ role: roleParam });
+
+        if (!isAdmin) {
+          const doc = getDocFuncionario();
+          if (doc) params.append('doc_funcionario', String(doc));
+        }
+
+        if (filterProgram !== 'ALL') params.append('filterProgram', filterProgram);
+        if (filterInstitution !== 'ALL') params.append('filterInstitution', filterInstitution);
+        if (filterAula !== 'ALL') params.append('filterAula', filterAula);
+        if (isAdmin && filterTutor !== 'ALL') params.append('filterTutor', filterTutor);
+        if (isAdmin && filterStudent !== 'ALL') params.append('filterStudent', filterStudent);
+
+        const url = `${API_BASE_URL}/api/calendar/events?${params.toString()}`;
+        console.log('📡 [CALENDAR EVENTS] GET', url);
+
+        const res = await fetch(url);
+        if (!res.ok) throw new Error(`Error al cargar eventos (${res.status})`);
+
+        const data = await res.json();
+        console.log('✅ [CALENDAR EVENTS] respuesta raw:', data);
+
+        // Soporta tanto { events: [...] } como un array directo
+        const rawEvents = Array.isArray(data) ? data : (data.events || []);
+
+        const mappedEvents: CalendarEvent[] = (rawEvents || []).map((e: any, idx: number) => {
+          const normalizedDay = mapBackendDayOfWeek(e.dayOfWeek);
+          const normalizedProgram = mapBackendProgramType(e.programType);
+
+          if (!normalizedDay) {
+            console.warn('❗ Evento con dayOfWeek no mapeable, usando LUNES por defecto. Evento:', e);
+          }
+
+          const startTimeStr = String(e.startTime ?? '07:00').slice(0, 5);
+          const endTimeStr = String(e.endTime ?? '09:00').slice(0, 5);
+
+          return {
+            id: String(e.id ?? idx),
+            title: e.aulaCode ?? e.title ?? `Aula ${e.aulaId ?? ''}`,
+            aulaCode: e.aulaCode ?? `Aula-${e.aulaId ?? idx}`,
+            aulaId: Number(e.aulaId ?? 0),
+            institutionName: e.institutionName ?? 'Institución sin nombre',
+            sedeName: e.sedeName ?? 'Sede sin nombre',
+            startTime: startTimeStr,
+            endTime: endTimeStr,
+            dayOfWeek: normalizedDay ?? DayOfWeek.LUNES,
+            programType: normalizedProgram,
+            studentsCount: e.studentsCount ?? 0,
+            grade: String(e.grade ?? ''),
+          };
+        });
+
+        console.log('✅ [CALENDAR EVENTS] mapeados:', mappedEvents);
+        setEvents(mappedEvents);
+      } catch (err: any) {
+        console.error(err);
+        setError(err.message || 'Error cargando eventos');
+      } finally {
+        setLoadingEvents(false);
+      }
+    };
+
+    fetchEvents();
+  }, [isAdmin, authUser, filterProgram, filterInstitution, filterAula, filterTutor, filterStudent]);
+
+  // 🔹 Helpers de calendario
   const getDaysInMonth = (date: Date) => {
     const year = date.getFullYear();
     const month = date.getMonth();
     const firstDay = new Date(year, month, 1);
     const lastDay = new Date(year, month + 1, 0);
     const daysInMonth = lastDay.getDate();
-    const startingDayOfWeek = firstDay.getDay();
-    
+    const startingDayOfWeek = firstDay.getDay(); // 0 domingo, 1 lunes, ...
+
     return { daysInMonth, startingDayOfWeek, year, month };
   };
 
   const getDayName = (date: Date): DayOfWeek => {
-    const days = [
-      DayOfWeek.LUNES,
-      DayOfWeek.MARTES,
-      DayOfWeek.MIERCOLES,
-      DayOfWeek.JUEVES,
-      DayOfWeek.VIERNES,
-      DayOfWeek.SABADO
-    ];
-    // JavaScript's getDay() returns 0 for Sunday, 1 for Monday, etc.
-    // We adjust it to match our enum (Monday = 0)
-    const dayIndex = date.getDay();
-    if (dayIndex === 0) return DayOfWeek.LUNES; // Skip Sunday for now
-    return days[dayIndex - 1];
+    const dayIndex = date.getDay(); // 0 domingo, 1 lunes, ...
+
+    switch (dayIndex) {
+      case 1: return DayOfWeek.LUNES;
+      case 2: return DayOfWeek.MARTES;
+      case 3: return DayOfWeek.MIERCOLES;
+      case 4: return DayOfWeek.JUEVES;
+      case 5: return DayOfWeek.VIERNES;
+      case 6: return DayOfWeek.SABADO;
+      case 0:
+      default:
+        return DayOfWeek.LUNES; // fallback
+    }
   };
 
   const getEventsForDay = (date: Date): CalendarEvent[] => {
     const dayName = getDayName(date);
-    return events.filter(event => event.dayOfWeek === dayName);
+    const list = events.filter(event => event.dayOfWeek === dayName);
+    // console.log('📅 [DAY EVENTS]', date.toDateString(), dayName, list);
+    return list;
   };
 
   const monthNames = [
@@ -161,11 +305,8 @@ export function ScheduleCalendar({ authUser }: ScheduleCalendarProps) {
   const navigateMonth = (direction: 'prev' | 'next') => {
     setCurrentDate(prev => {
       const newDate = new Date(prev);
-      if (direction === 'prev') {
-        newDate.setMonth(newDate.getMonth() - 1);
-      } else {
-        newDate.setMonth(newDate.getMonth() + 1);
-      }
+      if (direction === 'prev') newDate.setMonth(newDate.getMonth() - 1);
+      else newDate.setMonth(newDate.getMonth() + 1);
       return newDate;
     });
   };
@@ -173,14 +314,14 @@ export function ScheduleCalendar({ authUser }: ScheduleCalendarProps) {
   const isToday = (date: Date, day: number) => {
     const today = new Date();
     return date.getFullYear() === today.getFullYear() &&
-           date.getMonth() === today.getMonth() &&
-           day === today.getDate();
+      date.getMonth() === today.getMonth() &&
+      day === today.getDate();
   };
 
   const isSameDay = (date1: Date, date2: Date, day: number) => {
     return date1.getFullYear() === date2.getFullYear() &&
-           date1.getMonth() === date2.getMonth() &&
-           day === date2.getDate();
+      date1.getMonth() === date2.getMonth() &&
+      day === date2.getDate();
   };
 
   const getProgramColor = (programType: ProgramType) => {
@@ -198,27 +339,28 @@ export function ScheduleCalendar({ authUser }: ScheduleCalendarProps) {
   const { daysInMonth, startingDayOfWeek, year, month } = getDaysInMonth(currentDate);
   const todayEvents = getEventsForDay(selectedDate);
 
-  // Group events by program type
   const insideEvents = todayEvents.filter(e => e.programType === ProgramType.INSIDECLASSROOM);
   const outsideEvents = todayEvents.filter(e => e.programType === ProgramType.OUTSIDECLASSROOM);
 
-  // Time slots for day view (6 AM to 8 PM)
-  const timeSlots = Array.from({ length: 15 }, (_, i) => i + 6);
+  const timeSlots = Array.from({ length: 15 }, (_, i) => i + 6); // 6:00–20:00
 
   const getEventStyle = (event: CalendarEvent) => {
-    // Parse time to get position
     const [startHour, startMin] = event.startTime.split(':').map(Number);
     const [endHour, endMin] = event.endTime.split(':').map(Number);
-    
-    const startDecimal = startHour + startMin / 60;
-    const endDecimal = endHour + endMin / 60;
-    const duration = endDecimal - startDecimal;
-    
-    // Position relative to 6 AM
+
+    const startDecimal = startHour + (startMin || 0) / 60;
+    const endDecimal = endHour + (endMin || 0) / 60;
+    const duration = Math.max(endDecimal - startDecimal, 0.5); // mínimo 0.5h
+
     const top = ((startDecimal - 6) * 60) + 'px';
     const height = (duration * 60) + 'px';
-    
+
     return { top, height };
+  };
+
+  const dayEventsMonth = (day: number) => {
+    const date = new Date(year, month, day);
+    return getEventsForDay(date);
   };
 
   return (
@@ -226,7 +368,7 @@ export function ScheduleCalendar({ authUser }: ScheduleCalendarProps) {
       <div>
         <h2 className="text-2xl mb-2">Calendario de Clases</h2>
         <p className="text-gray-600">
-          {isAdmin 
+          {isAdmin
             ? 'Visualiza todas las clases programadas del programa GLOBALENGLISH'
             : 'Visualiza tu horario de clases programadas'}
         </p>
@@ -234,6 +376,12 @@ export function ScheduleCalendar({ authUser }: ScheduleCalendarProps) {
           <Badge variant="outline" className="mt-2 bg-amber-50 text-amber-700 border-amber-300">
             Vista Administrador - Mostrando todas las aulas del sistema
           </Badge>
+        )}
+        {(loadingEvents || loadingFilters) && (
+          <p className="text-xs text-gray-500 mt-1">Cargando datos del calendario...</p>
+        )}
+        {error && (
+          <p className="text-xs text-red-500 mt-1">⚠️ {error}</p>
         )}
       </div>
 
@@ -272,8 +420,10 @@ export function ScheduleCalendar({ authUser }: ScheduleCalendarProps) {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="ALL">Todas las instituciones</SelectItem>
-                  {institutions.map(inst => (
-                    <SelectItem key={inst.id} value={inst.id}>{inst.name}</SelectItem>
+                  {filtersData?.institutions.map(inst => (
+                    <SelectItem key={inst.id_ied} value={String(inst.id_ied)}>
+                      {inst.nombre}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -287,8 +437,10 @@ export function ScheduleCalendar({ authUser }: ScheduleCalendarProps) {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="ALL">Todas las aulas</SelectItem>
-                  {aulas.filter(a => a.isActive).map(aula => (
-                    <SelectItem key={aula.id} value={aula.id}>{aula.code}</SelectItem>
+                  {filtersData?.aulas.map(aula => (
+                    <SelectItem key={aula.id_aula} value={String(aula.id_aula)}>
+                      {aula.code}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -303,9 +455,9 @@ export function ScheduleCalendar({ authUser }: ScheduleCalendarProps) {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="ALL">Todos los tutores</SelectItem>
-                    {persons.filter(p => p.role === UserRole.TUTOR).map(tutor => (
-                      <SelectItem key={tutor.id} value={tutor.id}>
-                        {tutor.firstName} {tutor.lastName}
+                    {filtersData?.tutors?.map(tutor => (
+                      <SelectItem key={tutor.id_tutor} value={String(tutor.id_tutor)}>
+                        {tutor.fullName}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -322,9 +474,9 @@ export function ScheduleCalendar({ authUser }: ScheduleCalendarProps) {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="ALL">Todos los estudiantes</SelectItem>
-                    {students.map(student => (
-                      <SelectItem key={student.id} value={student.id}>
-                        {student.firstName} {student.lastName}
+                    {filtersData?.students?.map(student => (
+                      <SelectItem key={student.doc_estudiante} value={String(student.doc_estudiante)}>
+                        {student.fullName}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -341,29 +493,29 @@ export function ScheduleCalendar({ authUser }: ScheduleCalendarProps) {
                     {filterProgram === ProgramType.INSIDECLASSROOM ? 'INSIDECLASSROOM' : 'OUTSIDECLASSROOM'}
                   </Badge>
                 )}
-                {filterInstitution !== 'ALL' && (
+                {filterInstitution !== 'ALL' && filtersData && (
                   <Badge variant="secondary">
-                    {institutions.find(i => i.id === filterInstitution)?.name}
+                    {filtersData.institutions.find(i => String(i.id_ied) === filterInstitution)?.nombre || 'Institución'}
                   </Badge>
                 )}
-                {filterAula !== 'ALL' && (
+                {filterAula !== 'ALL' && filtersData && (
                   <Badge variant="secondary">
-                    {aulas.find(a => a.id === filterAula)?.code}
+                    {filtersData.aulas.find(a => String(a.id_aula) === filterAula)?.code || 'Aula'}
                   </Badge>
                 )}
-                {filterTutor !== 'ALL' && (
+                {isAdmin && filterTutor !== 'ALL' && filtersData && (
                   <Badge variant="secondary">
-                    {persons.find(p => p.id === filterTutor)?.firstName} {persons.find(p => p.id === filterTutor)?.lastName}
+                    {filtersData.tutors?.find(t => String(t.id_tutor) === filterTutor)?.fullName || 'Tutor'}
                   </Badge>
                 )}
-                {filterStudent !== 'ALL' && (
+                {isAdmin && filterStudent !== 'ALL' && filtersData && (
                   <Badge variant="secondary">
-                    {students.find(s => s.id === filterStudent)?.firstName} {students.find(s => s.id === filterStudent)?.lastName}
+                    {filtersData.students?.find(s => String(s.doc_estudiante) === filterStudent)?.fullName || 'Estudiante'}
                   </Badge>
                 )}
               </div>
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 size="sm"
                 onClick={() => {
                   setFilterProgram('ALL');
@@ -386,17 +538,18 @@ export function ScheduleCalendar({ authUser }: ScheduleCalendarProps) {
           <TabsTrigger value="month">Vista Mensual</TabsTrigger>
         </TabsList>
 
+        {/* VISTA SEMANAL */}
         <TabsContent value="week" className="space-y-4">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Day Schedule - Left Side (iOS style) */}
+            {/* Day Schedule - Left Side */}
             <div className="lg:col-span-2">
               <Card>
                 <CardHeader>
                   <div className="flex items-center justify-between">
                     <div>
                       <CardTitle>
-                        {selectedDate.toLocaleDateString('es-ES', { 
-                          weekday: 'long', 
+                        {selectedDate.toLocaleDateString('es-ES', {
+                          weekday: 'long',
                           day: 'numeric',
                           month: 'long',
                           year: 'numeric'
@@ -475,8 +628,8 @@ export function ScheduleCalendar({ authUser }: ScheduleCalendarProps) {
                               <div className="text-sm">
                                 <div className="flex items-center justify-between mb-1">
                                   <span className="font-medium">{event.aulaCode}</span>
-                                  <Badge 
-                                    variant="secondary" 
+                                  <Badge
+                                    variant="secondary"
                                     className={`text-xs ${
                                       event.programType === ProgramType.INSIDECLASSROOM
                                         ? 'bg-blue-100 text-blue-700'
@@ -539,19 +692,16 @@ export function ScheduleCalendar({ authUser }: ScheduleCalendarProps) {
                 </CardHeader>
                 <CardContent>
                   <div className="grid grid-cols-7 gap-1">
-                    {/* Week day headers */}
                     {weekDayNames.map((day, i) => (
                       <div key={i} className="text-center text-xs text-gray-500 pb-2">
                         {day}
                       </div>
                     ))}
-                    
-                    {/* Empty cells for days before month starts */}
+
                     {Array.from({ length: startingDayOfWeek === 0 ? 6 : startingDayOfWeek - 1 }).map((_, i) => (
                       <div key={`empty-${i}`} className="aspect-square" />
                     ))}
-                    
-                    {/* Days of month */}
+
                     {Array.from({ length: daysInMonth }).map((_, i) => {
                       const day = i + 1;
                       const date = new Date(year, month, day);
@@ -559,7 +709,7 @@ export function ScheduleCalendar({ authUser }: ScheduleCalendarProps) {
                       const hasEvents = dayEvents.length > 0;
                       const isSelected = isSameDay(selectedDate, currentDate, day);
                       const isTodayDate = isToday(currentDate, day);
-                      
+
                       return (
                         <button
                           key={day}
@@ -618,6 +768,7 @@ export function ScheduleCalendar({ authUser }: ScheduleCalendarProps) {
           </div>
         </TabsContent>
 
+        {/* VISTA MENSUAL */}
         <TabsContent value="month" className="space-y-4">
           <Card>
             <CardHeader>
@@ -654,25 +805,21 @@ export function ScheduleCalendar({ authUser }: ScheduleCalendarProps) {
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-7 gap-2">
-                {/* Week day headers */}
                 {['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'].map((day) => (
                   <div key={day} className="text-center text-sm text-gray-600 pb-2">
                     {day}
                   </div>
                 ))}
-                
-                {/* Empty cells for days before month starts */}
+
                 {Array.from({ length: startingDayOfWeek === 0 ? 6 : startingDayOfWeek - 1 }).map((_, i) => (
                   <div key={`empty-${i}`} className="min-h-[120px] border border-gray-100 rounded-lg bg-gray-50" />
                 ))}
-                
-                {/* Days of month */}
+
                 {Array.from({ length: daysInMonth }).map((_, i) => {
                   const day = i + 1;
-                  const date = new Date(year, month, day);
-                  const dayEvents = getEventsForDay(date);
+                  const dayEvents = dayEventsMonth(day);
                   const isTodayDate = isToday(currentDate, day);
-                  
+
                   return (
                     <div
                       key={day}
@@ -700,7 +847,9 @@ export function ScheduleCalendar({ authUser }: ScheduleCalendarProps) {
                                 : 'border-purple-500'
                             }`}
                           >
-                            <div className="truncate">{event.startTime} {event.aulaCode}</div>
+                            <div className="truncate">
+                              {event.startTime} {event.aulaCode}
+                            </div>
                           </div>
                         ))}
                         {dayEvents.length > 3 && (
