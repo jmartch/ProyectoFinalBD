@@ -2,6 +2,30 @@
 DROP DATABASE IF EXISTS global_english_db;
 CREATE DATABASE global_english_db;
 USE global_english_db;
+USE global_english_db;
+
+SELECT * FROM ied;
+SELECT * FROM sede;
+SELECT * FROM programa;
+SELECT * FROM aula;
+
+INSERT INTO funcionario (
+  doc_funcionario, tipo_doc, nombre1, nombre2, apellido1, apellido2,
+  sexo, correo, telefono, fecha_contrato
+) VALUES (
+  123456, 'CC', 'Juan', 'Carlos', 'Pérez', 'López',
+  'M', 'juan.tutor@example.com', '3001234567', '2024-01-15'
+);
+
+SELECT * FROM funcionario;
+
+INSERT INTO horario (dia_semana, hora_inicio, horas_duracion)
+VALUES ('LUNES', '08:00:00', 2);
+
+SELECT * FROM horario;  -- anota id_horario (ej: 1)
+
+INSERT INTO asignacion_aula_horario (id_horario, id_aula, fecha_inicio, fecha_fin)
+VALUES (1, 6, '2025-02-01', NULL);
 
 -- 1. Tabla IED (ya con AUTO_INCREMENT)
 CREATE TABLE ied (
@@ -13,11 +37,6 @@ CREATE TABLE ied (
   hora_fin TIME,
   jornada VARCHAR(50)
 );
-
-INSERT INTO ied (nombre, telefono, duracion, hora_inicio, hora_fin, jornada)
-VALUES ('IED Global Kids', '3000000000', '02:00:00', '07:00:00', '17:00:00', 'Jornada Única');
-
-SELECT * FROM ied;
 
 -- 2. Tabla SEDE (ahora sí con id_ied como FK)
 CREATE TABLE sede (
@@ -88,6 +107,9 @@ CREATE TABLE funcionario (
   fecha_contrato DATE NOT NULL
 );
 
+INSERT INTO registro_tutor (doc_funcionario, id_tutor, fecha_asignacion)
+VALUES (123456, 1, '2025-01-01');
+
 -- 8. Tabla ESTUDIANTE
 CREATE TABLE estudiante (
   doc_estudiante INT PRIMARY KEY,
@@ -100,9 +122,6 @@ CREATE TABLE estudiante (
   correo_acudiente VARCHAR(50) NOT NULL,
   telefono_acudiente VARCHAR(15) NOT NULL
 );
-
-INSERT INTO matricula (id_aula, doc_estudiante, fecha_inicio, fecha_fin)
-VALUES (6, 1001, '2025-01-01', NULL);
 
 -- 9. Tabla TUTOR
 CREATE TABLE tutor (
@@ -137,6 +156,9 @@ CREATE TABLE aula_tutor (
     ON UPDATE CASCADE,
   PRIMARY KEY (id_aula, id_tutor, fecha_asignacion)
 );
+
+INSERT INTO aula_tutor (id_aula, id_tutor, fecha_asignacion, fecha_fin)
+VALUES (6, 1, '2025-02-01', NULL);   -- aula 1, tutor 1, sin fecha_fin
 
 -- 12. Tabla USUARIO
 CREATE TABLE usuario (

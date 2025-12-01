@@ -100,3 +100,51 @@ export async function createAula(data: {
 
   return body.data as Aula;
 }
+
+// 👉 Tipos y helpers para TUTORES
+
+export interface TutorRow {
+  id_tutor: number;
+}
+
+/**
+ * Obtener todos los tutores
+ */
+export async function fetchTutores(): Promise<TutorRow[]> {
+  const res = await fetch(`${API_BASE_URL}/api/tutores`);
+  if (!res.ok) {
+    throw new Error("Error al obtener tutores");
+  }
+  return res.json();
+}
+
+/**
+ * Crear un tutor vacío (solo genera id_tutor AUTO_INCREMENT)
+ */
+export async function createTutor(): Promise<TutorRow> {
+  const res = await fetch(`${API_BASE_URL}/api/tutores`, {
+    method: "POST",
+  });
+
+  const body = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    throw new Error(body.message || "Error al crear el tutor");
+  }
+
+  // el backend responde: { message, data: { id_tutor } }
+  return body.data as TutorRow;
+}
+
+/**
+ * Eliminar un tutor por id_tutor
+ */
+export async function deleteTutor(id_tutor: number): Promise<void> {
+  const res = await fetch(`${API_BASE_URL}/api/tutores/${id_tutor}`, {
+    method: "DELETE",
+  });
+
+  const body = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    throw new Error(body.message || "Error al eliminar el tutor");
+  }
+}
