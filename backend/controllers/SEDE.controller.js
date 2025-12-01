@@ -1,196 +1,62 @@
 // controllers/SEDE.controller.js
 import Sede from "../models/SEDE.model.js";
 
-export const getAllSedes = async (req, res) => {
+export const getSedes = async (req, res) => {
   try {
-    const sedes = await Sede.getAll();
+    const { id_ied } = req.query;
+    let sedes;
+
+    if (id_ied) {
+      sedes = await Sede.getByIed(id_ied);
+    } else {
+      sedes = await Sede.getAll();
+    }
+
     res.json(sedes);
   } catch (error) {
-    res.status(500).json({ 
-      message: "Error al obtener las sedes", 
-      error: error.message 
-    });
-  }
-};
-
-export const getSedeById = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const sede = await Sede.getById(id);
-    
-    if (!sede) {
-      return res.status(404).json({ 
-        message: "Sede no encontrada" 
-      });
-    }
-    
-    res.json(sede);
-  } catch (error) {
-    res.status(500).json({ 
-      message: "Error al obtener la sede", 
-      error: error.message 
+    res.status(500).json({
+      message: "Error al obtener sedes",
+      error: error.message,
     });
   }
 };
 
 export const createSede = async (req, res) => {
   try {
-    const { id_IED, direccion, tipo } = req.body;
-    
-    // Validación de campos obligatorios
-    if (!id_IED || !direccion || !tipo) {
-      return res.status(400).json({ 
-        message: "Faltan campos requeridos: id_IED, direccion, tipo" 
+    const { id_ied, direccion, tipo } = req.body;
+
+    if (!id_ied || !direccion || !tipo) {
+      return res.status(400).json({
+        message: "Faltan campos requeridos: id_ied, direccion, tipo",
       });
     }
 
-    // Validación de longitud de dirección
-    if (direccion.length < 5 || direccion.length > 200) {
-      return res.status(400).json({ 
-        message: "La dirección debe tener entre 5 y 200 caracteres" 
+    if (direccion.length > 50) {
+      return res.status(400).json({
+        message: "La dirección no puede exceder 50 caracteres",
       });
     }
 
-    // Validación básica de formato de dirección
-    if (direccion.trim().length === 0) {
-      return res.status(400).json({ 
-        message: "La dirección no puede estar vacía o contener solo espacios" 
-      });
-    }
+    const result = await Sede.create({ id_ied, direccion, tipo });
 
-    // Validación de longitud de tipo
-    if (tipo.length > 50) {
-      return res.status(400).json({ 
-        message: "El tipo no puede exceder 50 caracteres" 
-      });
-    }
-    
-    const result = await Sede.create({ 
-      id_IED, 
-      direccion: direccion.trim(),
-      tipo 
-    });
-    
-    res.status(201).json({ 
+    res.status(201).json({
       message: "Sede creada exitosamente",
-      data: { 
+      data: {
         id_sede: result.insertId,
-        id_IED, 
-        direccion: direccion.trim(),
-        tipo 
-      }
+        id_ied,
+        direccion,
+        tipo,
+      },
     });
   } catch (error) {
-    // Manejo de llave foránea inválida (IED no existe)
-    if (error.code === "ER_NO_REFERENCED_ROW_2") {
-      return res.status(404).json({ 
-        message: "La IED especificada no existe" 
+    if (error.code === "ER_DUP_ENTRY") {
+      return res.status(409).json({
+        message: "Ya existe una sede con esa dirección",
       });
     }
-    res.status(500).json({ 
-      message: "Error al crear la sede", 
-      error: error.message 
-    });
-  }
-};
-
-export const updateSede = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { id_IED, direccion, tipo } = req.body;
-    
-    // Validar que haya datos para actualizar
-    if (!id_IED && !direccion && !tipo) {
-      return res.status(400).json({ 
-        message: "Debe proporcionar al menos un campo para actualizar (id_IED, direccion, tipo)" 
-      });
-    }
-
-    // Validación de longitud de dirección (si se proporciona)
-    if (direccion !== undefined) {
-      if (direccion.length < 5 || direccion.length > 200) {
-        return res.status(400).json({ 
-          message: "La dirección debe tener entre 5 y 200 caracteres" 
-        });
-      }
-
-      if (direccion.trim().length === 0) {
-        return res.status(400).json({ 
-          message: "La dirección no puede estar vacía o contener solo espacios" 
-        });
-      }
-    }
-
-    // Validación de longitud de tipo (si se proporciona)
-    if (tipo !== undefined && tipo.length > 50) {
-      return res.status(400).json({ 
-        message: "El tipo no puede exceder 50 caracteres" 
-      });
-    }
-
-    // Obtener sede actual para mantener valores no actualizados
-    const sedeActual = await Sede.getById(id);
-    if (!sedeActual) {
-      return res.status(404).json({ 
-        message: "Sede no encontrada" 
-      });
-    }
-
-    const datosActualizados = {
-      id_IED: id_IED ?? sedeActual.id_IED,
-      direccion: direccion !== undefined ? direccion.trim() : sedeActual.direccion,
-      tipo: tipo ?? sedeActual.tipo
-    };
-    
-    const result = await Sede.update(id, datosActualizados);
-    
-    if (result.affectedRows === 0) {
-      return res.status(404).json({ 
-        message: "Sede no encontrada" 
-      });
-    }
-    
-    res.json({ 
-      message: "Sede actualizada exitosamente",
-      data: { id_sede: id, ...datosActualizados }
-    });
-  } catch (error) {
-    // Manejo de llave foránea inválida
-    if (error.code === "ER_NO_REFERENCED_ROW_2") {
-      return res.status(404).json({ 
-        message: "La IED especificada no existe" 
-      });
-    }
-    res.status(500).json({ 
-      message: "Error al actualizar la sede", 
-      error: error.message 
-    });
-  }
-};
-
-export const deleteSede = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const result = await Sede.remove(id);
-    
-    if (result.affectedRows === 0) {
-      return res.status(404).json({ 
-        message: "Sede no encontrada" 
-      });
-    }
-    
-    res.json({ 
-      message: "Sede eliminada exitosamente" 
-    });
-  } catch (error) {
-    if (error.code === "ER_ROW_IS_REFERENCED_2") {
-      return res.status(409).json({ 
-        message: "No se puede eliminar la sede porque tiene registros asociados (aulas, funcionarios, etc.)" 
-      });
-    }
-    res.status(500).json({ 
-      message: "Error al eliminar la sede", 
-      error: error.message 
+    res.status(500).json({
+      message: "Error al crear la sede",
+      error: error.message,
     });
   }
 };

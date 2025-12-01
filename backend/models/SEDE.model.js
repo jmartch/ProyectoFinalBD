@@ -15,10 +15,11 @@ export default {
     return rows[0];
   },
 
-  create: async ({ id_IED, direccion, tipo }) => {
+  // models/SEDE.model.js
+  create: async ({ id_ied, direccion, tipo }) => {
     const [result] = await db.query(
-      "INSERT INTO SEDE (id_IED, direccion, tipo) VALUES (?, ?, ?)",
-      [id_IED, direccion, tipo]
+      "INSERT INTO sede (id_ied, direccion, tipo) VALUES (?, ?, ?)",
+      [id_ied, direccion, tipo]
     );
     return { insertId: result.insertId };
   },

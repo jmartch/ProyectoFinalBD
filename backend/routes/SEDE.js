@@ -1,13 +1,13 @@
-// routes/SEDE.routes.js
+// routes/SEDE.js
 import { Router } from "express";
-import * as sedeController from "../controllers/SEDE.controller.js";
+import { getSedes, createSede } from "../controllers/SEDE.controller.js";
 
 const router = Router();
 
-router.get("/", sedeController.getAllSedes);
-router.get("/:id", sedeController.getSedeById);
-router.post("/", sedeController.createSede);
-router.put("/:id", sedeController.updateSede);
-router.delete("/:id", sedeController.deleteSede);
+// GET /api/sedes   (opcional: ?id_ied=1)
+router.get("/", getSedes);
+
+// POST /api/sedes
+router.post("/", createSede);
 
 export default router;
