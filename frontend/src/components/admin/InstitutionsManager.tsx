@@ -25,10 +25,40 @@ import {
   TabsList,
   TabsTrigger,
 } from "../ui/tabs";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "../ui/table";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../ui/select";
 
-// 👇 NUEVO: usamos el cliente de API
-import type { IED } from "../../lib/api";
-import { fetchIEDs, createIED } from "../../lib/api";
+const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
+
+type IED = {
+  id_ied: number;
+  nombre: string;
+  telefono: string;
+  duracion: string | null;
+  hora_inicio: string | null;
+  hora_fin: string | null;
+  jornada: string | null;
+};
+
+type Sede = {
+  id_sede: number;
+  id_ied: number;
+  direccion: string;
+  tipo: string; // "Principal" | "Secundaria" | etc.
+};
 
 export function InstitutionsManager() {
   const [ieds, setIeds] = useState<IED[]>([]);
@@ -39,29 +69,38 @@ export function InstitutionsManager() {
   const [loadingIeds, setLoadingIeds] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Formulario para crear IED
-  const [iedForm, setIedForm] = useState({
-    nombre: "",
-    telefono: "",
-    duracion: "02:00",      // HH:MM para el input
-    hora_inicio: "07:00",
-    hora_fin: "17:00",
-    jornada: "Jornada Única",
-  });
+  // SEDES
+  const [sedes, setSedes] = useState<Sede[]>([]);
+  const [loadingSedes, setLoadingSedes] = useState(false);
+
+  // Form IED
+  const [nombre, setNombre] = useState("");
+  const [telefono, setTelefono] = useState("");
+  const [duracion, setDuracion] = useState("02:00");
+  const [horaInicio, setHoraInicio] = useState("07:00");
+  const [horaFin, setHoraFin] = useState("17:00");
+  const [jornada, setJornada] = useState("Jornada Única");
+
+  // Form Sede
+  const [sedeDireccion, setSedeDireccion] = useState("");
+  const [sedeTipo, setSedeTipo] = useState("Principal");
 
   const selectedIed = ieds.find((i) => i.id_ied === selectedIedId) || null;
 
-  // Helper para convertir "HH:MM" a "HH:MM:SS"
   const toHHMMSS = (value: string) =>
     value && value.length === 5 ? `${value}:00` : value;
 
-  // 1. Cargar IED al montar el componente
+  // Cargar IEDs al montar
   useEffect(() => {
     const loadIeds = async () => {
       try {
         setLoadingIeds(true);
         setError(null);
-        const data = await fetchIEDs();
+
+        const res = await fetch(`${API_BASE_URL}/api/ieds`);
+        if (!res.ok) throw new Error("Error al obtener IED");
+
+        const data: IED[] = await res.json();
         setIeds(data);
       } catch (err) {
         console.error(err);
@@ -74,33 +113,121 @@ export function InstitutionsManager() {
     loadIeds();
   }, []);
 
-  // 2. Crear IED desde el formulario
+  // Cargar SEDES cuando cambie la IED seleccionada
+  useEffect(() => {
+    const loadSedes = async () => {
+      if (!selectedIedId) {
+        setSedes([]);
+        return;
+      }
+      try {
+        setLoadingSedes(true);
+        const res = await fetch(
+          `${API_BASE_URL}/api/sedes?iedId=${selectedIedId}`
+        );
+        if (!res.ok) throw new Error("Error al obtener sedes");
+        const data: Sede[] = await res.json();
+        setSedes(data);
+      } catch (err) {
+        console.error(err);
+        // Puedes usar un error separado si quieres
+      } finally {
+        setLoadingSedes(false);
+      }
+    };
+
+    loadSedes();
+  }, [selectedIedId]);
+
+  // Crear IED
   const handleSubmitIED = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError(null);
+
+    const payload = {
+      nombre,
+      telefono,
+      duracion: toHHMMSS(duracion),
+      hora_inicio: toHHMMSS(horaInicio),
+      hora_fin: toHHMMSS(horaFin),
+      jornada,
+    };
+
+    console.log("Enviando a /api/ieds:", payload);
+
     try {
-      setError(null);
-      const newIed = await createIED({
-        nombre: iedForm.nombre,
-        telefono: iedForm.telefono,
-        duracion: toHHMMSS(iedForm.duracion),
-        hora_inicio: toHHMMSS(iedForm.hora_inicio),
-        hora_fin: toHHMMSS(iedForm.hora_fin),
-        jornada: iedForm.jornada,
+      const res = await fetch(`${API_BASE_URL}/api/ieds`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
       });
 
-      setIeds((prev) => [...prev, newIed]);
-      setIedForm({
-        nombre: "",
-        telefono: "",
-        duracion: "02:00",
-        hora_inicio: "07:00",
-        hora_fin: "17:00",
-        jornada: "Jornada Única",
-      });
+      const body = await res.json().catch(() => ({}));
+      console.log("Respuesta backend (IED):", res.status, body);
+
+      if (!res.ok) {
+        setError(body.message || "Error al crear la IED");
+        return;
+      }
+
+      const nuevaIed: IED = body.data;
+      setIeds((prev) => [...prev, nuevaIed]);
+
+      // limpiar form
+      setNombre("");
+      setTelefono("");
+      setDuracion("02:00");
+      setHoraInicio("07:00");
+      setHoraFin("17:00");
+      setJornada("Jornada Única");
+
       setIsAddDialogOpen(false);
     } catch (err: any) {
       console.error(err);
-      setError(err.message || "No se pudo guardar la IED");
+      setError(err.message || "Error de red al crear la IED");
+    }
+  };
+
+  // Crear SEDE
+  const handleSubmitSede = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedIedId) {
+      setError("Debes seleccionar primero una IED para agregar sedes.");
+      return;
+    }
+
+    const payload = {
+      id_ied: selectedIedId,
+      direccion: sedeDireccion,
+      tipo: sedeTipo,
+    };
+
+    console.log("Enviando a /api/sedes:", payload);
+
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/sedes`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      const body = await res.json().catch(() => ({}));
+      console.log("Respuesta backend (Sede):", res.status, body);
+
+      if (!res.ok) {
+        setError(body.message || "Error al crear la sede");
+        return;
+      }
+
+      const nuevaSede: Sede = body.data;
+      setSedes((prev) => [...prev, nuevaSede]);
+
+      setSedeDireccion("");
+      setSedeTipo("Principal");
+      setIsAddSedeDialogOpen(false);
+    } catch (err: any) {
+      console.error(err);
+      setError(err.message || "Error de red al crear la sede");
     }
   };
 
@@ -111,7 +238,7 @@ export function InstitutionsManager() {
         <div>
           <h2 className="text-2xl">Gestión de Instituciones (IED)</h2>
           <p className="text-gray-600 mt-1">
-            Administrar Instituciones Educativas del Distrito (IED)
+            Administrar Instituciones Educativas del Distrito (IED) y sus sedes
           </p>
           {error && (
             <p className="text-sm text-red-500 mt-2">{error}</p>
@@ -140,10 +267,8 @@ export function InstitutionsManager() {
                   id="nombre"
                   placeholder="IED Global Kids"
                   required
-                  value={iedForm.nombre}
-                  onChange={(e) =>
-                    setIedForm((f) => ({ ...f, nombre: e.target.value }))
-                  }
+                  value={nombre}
+                  onChange={(e) => setNombre(e.target.value)}
                 />
               </div>
 
@@ -155,10 +280,8 @@ export function InstitutionsManager() {
                     type="tel"
                     placeholder="3000000000"
                     required
-                    value={iedForm.telefono}
-                    onChange={(e) =>
-                      setIedForm((f) => ({ ...f, telefono: e.target.value }))
-                    }
+                    value={telefono}
+                    onChange={(e) => setTelefono(e.target.value)}
                   />
                 </div>
                 <div className="space-y-2">
@@ -167,10 +290,8 @@ export function InstitutionsManager() {
                     id="jornada"
                     placeholder="Jornada Única"
                     required
-                    value={iedForm.jornada}
-                    onChange={(e) =>
-                      setIedForm((f) => ({ ...f, jornada: e.target.value }))
-                    }
+                    value={jornada}
+                    onChange={(e) => setJornada(e.target.value)}
                   />
                 </div>
               </div>
@@ -183,10 +304,8 @@ export function InstitutionsManager() {
                     type="time"
                     step={60}
                     required
-                    value={iedForm.duracion}
-                    onChange={(e) =>
-                      setIedForm((f) => ({ ...f, duracion: e.target.value }))
-                    }
+                    value={duracion}
+                    onChange={(e) => setDuracion(e.target.value)}
                   />
                 </div>
 
@@ -197,10 +316,8 @@ export function InstitutionsManager() {
                     type="time"
                     step={60}
                     required
-                    value={iedForm.hora_inicio}
-                    onChange={(e) =>
-                      setIedForm((f) => ({ ...f, hora_inicio: e.target.value }))
-                    }
+                    value={horaInicio}
+                    onChange={(e) => setHoraInicio(e.target.value)}
                   />
                 </div>
 
@@ -211,10 +328,8 @@ export function InstitutionsManager() {
                     type="time"
                     step={60}
                     required
-                    value={iedForm.hora_fin}
-                    onChange={(e) =>
-                      setIedForm((f) => ({ ...f, hora_fin: e.target.value }))
-                    }
+                    value={horaFin}
+                    onChange={(e) => setHoraFin(e.target.value)}
                   />
                 </div>
               </div>
@@ -284,7 +399,7 @@ export function InstitutionsManager() {
           </CardContent>
         </Card>
 
-        {/* Detalle de IED */}
+        {/* Detalle de IED + SEDES */}
         <Card className="lg:col-span-2">
           <CardHeader>
             <CardTitle>
@@ -292,7 +407,7 @@ export function InstitutionsManager() {
             </CardTitle>
             <CardDescription>
               {selectedIed
-                ? "Detalles de la institución"
+                ? "Detalles y sedes de la institución"
                 : "Seleccione una institución de la lista para ver sus detalles"}
             </CardDescription>
           </CardHeader>
@@ -310,7 +425,7 @@ export function InstitutionsManager() {
                   </TabsTrigger>
                   <TabsTrigger value="sedes">
                     <MapPin className="w-4 h-4 mr-2" />
-                    Sedes
+                    Sedes ({sedes.length})
                   </TabsTrigger>
                 </TabsList>
 
@@ -354,12 +469,59 @@ export function InstitutionsManager() {
                 </TabsContent>
 
                 <TabsContent value="sedes">
-                  <div className="text-center py-8 text-gray-500">
-                    <MapPin className="w-12 h-12 mx-auto mb-3 opacity-50" />
-                    <p>
-                      Las sedes se conectan después cuando tengamos los
-                      endpoints de la tabla <code>sede</code>.
-                    </p>
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <p className="text-sm text-gray-600">
+                        {loadingSedes
+                          ? "Cargando sedes..."
+                          : sedes.length === 0
+                          ? "No hay sedes registradas para esta IED."
+                          : "Sedes registradas para esta IED."}
+                      </p>
+                      <Button
+                        size="sm"
+                        onClick={() => setIsAddSedeDialogOpen(true)}
+                      >
+                        <Plus className="w-4 h-4 mr-2" />
+                        Agregar Sede
+                      </Button>
+                    </div>
+
+                    {sedes.length > 0 && (
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Dirección</TableHead>
+                            <TableHead>Tipo</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {sedes.map((sede) => (
+                            <TableRow key={sede.id_sede}>
+                              <TableCell>{sede.direccion}</TableCell>
+                              <TableCell>
+                                <Badge
+                                  variant={
+                                    sede.tipo === "Principal"
+                                      ? "default"
+                                      : "secondary"
+                                  }
+                                >
+                                  {sede.tipo}
+                                </Badge>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    )}
+
+                    {sedes.length === 0 && !loadingSedes && (
+                      <div className="text-center py-8 text-gray-500">
+                        <MapPin className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                        <p>No hay sedes registradas para esta institución</p>
+                      </div>
+                    )}
                   </div>
                 </TabsContent>
               </Tabs>
@@ -373,7 +535,7 @@ export function InstitutionsManager() {
         </Card>
       </div>
 
-      {/* Dialog de sedes lo dejamos sin lógica por ahora */}
+      {/* Dialog para crear SEDE */}
       <Dialog
         open={isAddSedeDialogOpen}
         onOpenChange={setIsAddSedeDialogOpen}
@@ -382,12 +544,63 @@ export function InstitutionsManager() {
           <DialogHeader>
             <DialogTitle>Registrar Nueva Sede</DialogTitle>
             <DialogDescription>
-              Aquí luego se conectará con /api/sede
+              Agrega una nueva sede para {selectedIed?.nombre || "la IED seleccionada"}
             </DialogDescription>
           </DialogHeader>
-          <div className="text-sm text-gray-500">
-            Por ahora estamos probando solo la creación de IED.
-          </div>
+
+          {!selectedIed && (
+            <p className="text-sm text-red-500 mb-2">
+              Debes seleccionar una IED antes de crear una sede.
+            </p>
+          )}
+
+          <form className="space-y-4" onSubmit={handleSubmitSede}>
+            <div className="space-y-2">
+              <Label htmlFor="sede-direccion">Dirección</Label>
+              <Input
+                id="sede-direccion"
+                placeholder="Calle 123 #45-67"
+                required
+                value={sedeDireccion}
+                onChange={(e) => setSedeDireccion(e.target.value)}
+                disabled={!selectedIed}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="sede-tipo">Tipo de Sede</Label>
+              <Select
+                value={sedeTipo}
+                onValueChange={setSedeTipo}
+                disabled={!selectedIed}
+              >
+                <SelectTrigger id="sede-tipo">
+                  <SelectValue placeholder="Seleccione el tipo de sede" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Principal">Sede Principal</SelectItem>
+                  <SelectItem value="Secundaria">Sede Secundaria</SelectItem>
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-gray-500 mt-1">
+                La sede principal es la ubicación central de la institución.
+              </p>
+            </div>
+
+            <div className="flex justify-end gap-2 pt-4 border-t">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setIsAddSedeDialogOpen(false)}
+              >
+                Cancelar
+              </Button>
+              <Button type="submit" disabled={!selectedIed}>
+                <Plus className="w-4 h-4 mr-2" />
+                Guardar Sede
+              </Button>
+            </div>
+          </form>
         </DialogContent>
       </Dialog>
     </div>

@@ -1,4 +1,3 @@
--- Active: 1763606210735@@127.0.0.1@3306@global_english_db
 -- 0. Borrar y crear de nuevo la base de datos
 DROP DATABASE IF EXISTS global_english_db;
 CREATE DATABASE global_english_db;
@@ -15,6 +14,10 @@ CREATE TABLE ied (
   jornada VARCHAR(50)
 );
 
+INSERT INTO ied (nombre, telefono, duracion, hora_inicio, hora_fin, jornada)
+VALUES ('IED Global Kids', '3000000000', '02:00:00', '07:00:00', '17:00:00', 'Jornada Única');
+
+SELECT * FROM ied;
 
 -- 2. Tabla SEDE (ahora sí con id_ied como FK)
 CREATE TABLE sede (
@@ -27,7 +30,6 @@ CREATE TABLE sede (
       ON DELETE CASCADE
       ON UPDATE CASCADE
 );
-
 
 -- 3. Tabla PROGRAMA
 CREATE TABLE programa (

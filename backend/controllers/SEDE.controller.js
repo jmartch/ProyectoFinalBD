@@ -1,21 +1,22 @@
-// controllers/SEDE.controller.js
+// backend/controllers/SEDE.controller.js
 import Sede from "../models/SEDE.model.js";
 
 export const getSedes = async (req, res) => {
   try {
-    const { id_ied } = req.query;
-    let sedes;
+    const { iedId } = req.query;
 
-    if (id_ied) {
-      sedes = await Sede.getByIed(id_ied);
-    } else {
-      sedes = await Sede.getAll();
+    if (!iedId) {
+      return res.status(400).json({
+        message: "El parámetro 'iedId' es obligatorio",
+      });
     }
 
+    const sedes = await Sede.getByIED(iedId);
     res.json(sedes);
   } catch (error) {
+    console.error("[SEDE] Error al obtener sedes:", error);
     res.status(500).json({
-      message: "Error al obtener sedes",
+      message: "Error al obtener las sedes",
       error: error.message,
     });
   }
@@ -37,6 +38,12 @@ export const createSede = async (req, res) => {
       });
     }
 
+    if (tipo.length > 50) {
+      return res.status(400).json({
+        message: "El tipo no puede exceder 50 caracteres",
+      });
+    }
+
     const result = await Sede.create({ id_ied, direccion, tipo });
 
     res.status(201).json({
@@ -49,6 +56,7 @@ export const createSede = async (req, res) => {
       },
     });
   } catch (error) {
+    console.error("[SEDE] Error al crear sede:", error);
     if (error.code === "ER_DUP_ENTRY") {
       return res.status(409).json({
         message: "Ya existe una sede con esa dirección",
@@ -56,6 +64,55 @@ export const createSede = async (req, res) => {
     }
     res.status(500).json({
       message: "Error al crear la sede",
+      error: error.message,
+    });
+  }
+};
+
+export const updateSede = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { direccion, tipo } = req.body;
+
+    if (!direccion || !tipo) {
+      return res.status(400).json({
+        message: "Faltan campos requeridos: direccion, tipo",
+      });
+    }
+
+    const result = await Sede.update(id, { direccion, tipo });
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ message: "Sede no encontrada" });
+    }
+
+    res.json({
+      message: "Sede actualizada exitosamente",
+      data: { id_sede: id, direccion, tipo },
+    });
+  } catch (error) {
+    console.error("[SEDE] Error al actualizar sede:", error);
+    res.status(500).json({
+      message: "Error al actualizar la sede",
+      error: error.message,
+    });
+  }
+};
+
+export const deleteSede = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const result = await Sede.remove(id);
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ message: "Sede no encontrada" });
+    }
+
+    res.json({ message: "Sede eliminada exitosamente" });
+  } catch (error) {
+    console.error("[SEDE] Error al eliminar sede:", error);
+    res.status(500).json({
+      message: "Error al eliminar la sede",
       error: error.message,
     });
   }

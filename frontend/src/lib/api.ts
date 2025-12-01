@@ -38,39 +38,3 @@ export async function createIED(data: {
   const body = await res.json();
   return body.data;
 }
-
-// ------- SEDES ---------
-export interface Sede {
-  id_sede: number;
-  id_ied: number;
-  direccion: string;
-  tipo: string; // Principal / Secundaria / etc.
-}
-
-export async function fetchSedesByIed(id_ied: number): Promise<Sede[]> {
-  const res = await fetch(
-    `${API_BASE_URL}/api/sedes?id_ied=${encodeURIComponent(id_ied)}`
-  );
-  if (!res.ok) throw new Error("Error al obtener sedes");
-  return res.json();
-}
-
-export async function createSede(data: {
-  id_ied: number;
-  direccion: string;
-  tipo: string;
-}): Promise<Sede> {
-  const res = await fetch(`${API_BASE_URL}/api/sedes`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(data),
-  });
-
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    throw new Error(err.message || "Error al crear sede");
-  }
-
-  const body = await res.json();
-  return body.data;
-}
