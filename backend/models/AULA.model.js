@@ -1,20 +1,22 @@
-// models/AULA.model.js
+// backend/models/AULA.model.js
 import db from "../config/db.js";
 
-export default {
+const AULA = {
   getAll: async () => {
-    const [rows] = await db.query("SELECT * FROM aula");
+    // Puedes seleccionar solo las columnas que necesitas
+    const [rows] = await db.query("SELECT id_aula, id_sede, id_programa, grado FROM aula");
     return rows;
   },
 
   getById: async (id_aula) => {
     const [rows] = await db.query(
-      "SELECT * FROM aula WHERE id_aula = ?",
+      "SELECT id_aula, id_sede, id_programa, grado FROM aula WHERE id_aula = ?",
       [id_aula]
     );
     return rows[0];
   },
 
+  // create SIN id_ied
   create: async ({ id_sede, id_programa, grado }) => {
     const [result] = await db.query(
       "INSERT INTO aula (id_sede, id_programa, grado) VALUES (?, ?, ?)",
@@ -23,6 +25,7 @@ export default {
     return { insertId: result.insertId };
   },
 
+  // update SIN id_ied
   update: async (id_aula, { id_sede, id_programa, grado }) => {
     const [result] = await db.query(
       "UPDATE aula SET id_sede = ?, id_programa = ?, grado = ? WHERE id_aula = ?",
@@ -39,3 +42,5 @@ export default {
     return result;
   },
 };
+
+export default AULA;

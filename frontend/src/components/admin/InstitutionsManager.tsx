@@ -19,12 +19,7 @@ import {
 } from "../ui/dialog";
 import { Badge } from "../ui/badge";
 import { Plus, Building2, MapPin } from "lucide-react";
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "../ui/tabs";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
 import {
   Table,
   TableBody,
@@ -85,7 +80,8 @@ export function InstitutionsManager() {
   const [sedeDireccion, setSedeDireccion] = useState("");
   const [sedeTipo, setSedeTipo] = useState("Principal");
 
-  const selectedIed = ieds.find((i) => i.id_ied === selectedIedId) || null;
+  const selectedIed =
+    ieds.find((i) => i.id_ied === selectedIedId) || null;
 
   const toHHMMSS = (value: string) =>
     value && value.length === 5 ? `${value}:00` : value;
@@ -102,6 +98,11 @@ export function InstitutionsManager() {
 
         const data: IED[] = await res.json();
         setIeds(data);
+
+        // Opcional: seleccionar la primera IED automáticamente
+        if (data.length > 0 && selectedIedId === null) {
+          setSelectedIedId(data[0].id_ied);
+        }
       } catch (err) {
         console.error(err);
         setError("No se pudieron cargar las instituciones (IED)");
@@ -111,26 +112,34 @@ export function InstitutionsManager() {
     };
 
     loadIeds();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Cargar SEDES cuando cambie la IED seleccionada
+  // Cargar TODAS las sedes y luego filtrar por IED seleccionada
   useEffect(() => {
     const loadSedes = async () => {
       if (!selectedIedId) {
         setSedes([]);
         return;
       }
+
       try {
         setLoadingSedes(true);
-        const res = await fetch(
-          `${API_BASE_URL}/api/sedes?iedId=${selectedIedId}`
-        );
+
+        // 👇 Traemos todas las sedes
+        const res = await fetch(`${API_BASE_URL}/api/sedes`);
         if (!res.ok) throw new Error("Error al obtener sedes");
+
         const data: Sede[] = await res.json();
-        setSedes(data);
+
+        // 👇 Filtramos solo las sedes de la IED seleccionada
+        const filtered = data.filter(
+          (sede) => sede.id_ied === selectedIedId
+        );
+        setSedes(filtered);
       } catch (err) {
         console.error(err);
-        // Puedes usar un error separado si quieres
+        // Si quieres, aquí podrías setear un error específico de sedes
       } finally {
         setLoadingSedes(false);
       }
@@ -220,7 +229,11 @@ export function InstitutionsManager() {
       }
 
       const nuevaSede: Sede = body.data;
-      setSedes((prev) => [...prev, nuevaSede]);
+
+      // 👇 Como ya estamos filtrando por IED, solo agregamos si coincide
+      if (nuevaSede.id_ied === selectedIedId) {
+        setSedes((prev) => [...prev, nuevaSede]);
+      }
 
       setSedeDireccion("");
       setSedeTipo("Principal");
@@ -425,6 +438,7 @@ export function InstitutionsManager() {
                   </TabsTrigger>
                   <TabsTrigger value="sedes">
                     <MapPin className="w-4 h-4 mr-2" />
+                    {/* sedes ya viene filtrado */}
                     Sedes ({sedes.length})
                   </TabsTrigger>
                 </TabsList>
@@ -443,9 +457,7 @@ export function InstitutionsManager() {
 
                   <div className="grid grid-cols-3 gap-4">
                     <div>
-                      <Label className="text-xs text-gray-500">
-                        Duración
-                      </Label>
+                      <Label className="text-xs text-gray-500">Duración</Label>
                       <p>{selectedIed.duracion ?? "-"}</p>
                     </div>
                     <div>
@@ -455,9 +467,7 @@ export function InstitutionsManager() {
                       <p>{selectedIed.hora_inicio ?? "-"}</p>
                     </div>
                     <div>
-                      <Label className="text-xs text-gray-500">
-                        Hora fin
-                      </Label>
+                      <Label className="text-xs text-gray-500">Hora fin</Label>
                       <p>{selectedIed.hora_fin ?? "-"}</p>
                     </div>
                   </div>
@@ -544,7 +554,8 @@ export function InstitutionsManager() {
           <DialogHeader>
             <DialogTitle>Registrar Nueva Sede</DialogTitle>
             <DialogDescription>
-              Agrega una nueva sede para {selectedIed?.nombre || "la IED seleccionada"}
+              Agrega una nueva sede para{" "}
+              {selectedIed?.nombre || "la IED seleccionada"}
             </DialogDescription>
           </DialogHeader>
 

@@ -37,6 +37,21 @@ CREATE TABLE programa (
   nombre_programa VARCHAR(50) NOT NULL
 );
 
+INSERT INTO programa (nombre_programa)
+VALUES 
+  ('GLOBALENGLISH Inside Classroom'),
+  ('GLOBALENGLISH Outside Classroom');
+
+-- Ver qué IEDs hay
+SELECT * FROM ied;
+
+-- Supongamos que tienes una IED con id_ied = 1
+INSERT INTO sede (id_ied, direccion, tipo)
+VALUES (1, 'Cra 1 # 2-3 Barrio Centro', 'Principal');
+
+SELECT * FROM sede;
+
+
 -- 4. Tabla AULA
 CREATE TABLE aula (
   id_aula INT AUTO_INCREMENT PRIMARY KEY,

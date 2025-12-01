@@ -1,11 +1,13 @@
-// controllers/aula.controller.js
+// backend/controllers/AULA.controller.js
 import AULA from "../models/AULA.model.js";
 
+// GET /api/aulas
 export const getAllAulas = async (req, res) => {
   try {
     const aulas = await AULA.getAll();
     res.json(aulas);
   } catch (error) {
+    console.error("[AULA] Error al obtener las aulas:", error);
     res.status(500).json({
       message: "Error al obtener las aulas",
       error: error.message,
@@ -13,6 +15,7 @@ export const getAllAulas = async (req, res) => {
   }
 };
 
+// GET /api/aulas/:id
 export const getAulaById = async (req, res) => {
   try {
     const { id } = req.params;
@@ -26,6 +29,7 @@ export const getAulaById = async (req, res) => {
 
     res.json(aula);
   } catch (error) {
+    console.error("[AULA] Error al obtener el aula:", error);
     res.status(500).json({
       message: "Error al obtener el aula",
       error: error.message,
@@ -33,15 +37,14 @@ export const getAulaById = async (req, res) => {
   }
 };
 
+// POST /api/aulas
 export const createAula = async (req, res) => {
   try {
     const { id_sede, id_programa, grado } = req.body;
 
-    // Validación básica
     if (!id_sede || !id_programa || !grado) {
       return res.status(400).json({
-        message:
-          "Faltan campos requeridos: id_sede, id_programa, grado",
+        message: "Faltan campos requeridos: id_sede, id_programa, grado",
       });
     }
 
@@ -57,13 +60,14 @@ export const createAula = async (req, res) => {
       },
     });
   } catch (error) {
-    // Manejo de errores de llave foránea
+    console.error("[AULA] Error al crear el aula:", error);
+
     if (error.code === "ER_NO_REFERENCED_ROW_2") {
       return res.status(400).json({
-        message:
-          "La sede o el programa especificado no existe",
+        message: "La sede o el programa especificado no existe",
       });
     }
+
     res.status(500).json({
       message: "Error al crear el aula",
       error: error.message,
@@ -71,16 +75,15 @@ export const createAula = async (req, res) => {
   }
 };
 
+// PUT /api/aulas/:id
 export const updateAula = async (req, res) => {
   try {
     const { id } = req.params;
     const { id_sede, id_programa, grado } = req.body;
 
-    // Validación básica
     if (!id_sede || !id_programa || !grado) {
       return res.status(400).json({
-        message:
-          "Faltan campos requeridos: id_sede, id_programa, grado",
+        message: "Faltan campos requeridos: id_sede, id_programa, grado",
       });
     }
 
@@ -102,13 +105,14 @@ export const updateAula = async (req, res) => {
       },
     });
   } catch (error) {
-    // Manejo de errores de llave foránea
+    console.error("[AULA] Error al actualizar el aula:", error);
+
     if (error.code === "ER_NO_REFERENCED_ROW_2") {
       return res.status(400).json({
-        message:
-          "La sede o el programa especificado no existe",
+        message: "La sede o el programa especificado no existe",
       });
     }
+
     res.status(500).json({
       message: "Error al actualizar el aula",
       error: error.message,
@@ -116,6 +120,7 @@ export const updateAula = async (req, res) => {
   }
 };
 
+// DELETE /api/aulas/:id
 export const deleteAula = async (req, res) => {
   try {
     const { id } = req.params;
@@ -131,13 +136,15 @@ export const deleteAula = async (req, res) => {
       message: "Aula eliminada exitosamente",
     });
   } catch (error) {
-    // Manejo de restricciones de llave foránea al eliminar
+    console.error("[AULA] Error al eliminar el aula:", error);
+
     if (error.code === "ER_ROW_IS_REFERENCED_2") {
       return res.status(409).json({
         message:
           "No se puede eliminar el aula porque tiene registros asociados",
       });
     }
+
     res.status(500).json({
       message: "Error al eliminar el aula",
       error: error.message,

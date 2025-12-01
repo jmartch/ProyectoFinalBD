@@ -1,7 +1,7 @@
-// models/PROGRAMA.model.js
+// backend/models/PROGRAMA.model.js
 import db from "../config/db.js";
 
-export default {
+const Programa = {
   getAll: async () => {
     const [rows] = await db.query("SELECT * FROM programa");
     return rows;
@@ -37,5 +37,7 @@ export default {
       [id_programa]
     );
     return result;
-  }
+  },
 };
+
+export default Programa;

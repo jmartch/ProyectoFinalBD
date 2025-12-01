@@ -1,13 +1,13 @@
-// routes/programa.routes.js
+// backend/routes/PROGRAMA.js
 import { Router } from "express";
 import * as programaController from "../controllers/PROGRAMA.controller.js";
 
 const router = Router();
 
 router.get("/", programaController.getAllProgramas);
-router.get("/:id_programa", programaController.getProgramaById);
+router.get("/:id", programaController.getProgramaById);
 router.post("/", programaController.createPrograma);
-router.put("/:id_programa", programaController.updatePrograma);
-router.delete("/:id_programa", programaController.deletePrograma);
+router.put("/:id", programaController.updatePrograma);
+router.delete("/:id", programaController.deletePrograma);
 
 export default router;

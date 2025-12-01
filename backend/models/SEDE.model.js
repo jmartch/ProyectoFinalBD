@@ -1,17 +1,16 @@
 // backend/models/SEDE.model.js
 import db from "../config/db.js";
 
-const Sede = {
-  // Sedes de una IED
-  getByIED: async (id_ied) => {
+const SEDE = {
+  // Obtener todas las sedes
+  getAll: async () => {
     const [rows] = await db.query(
-      "SELECT id_sede, id_ied, direccion, tipo FROM sede WHERE id_ied = ?",
-      [id_ied]
+      "SELECT id_sede, id_ied, direccion, tipo FROM sede"
     );
     return rows;
   },
 
-  // Una sede por id
+  // Obtener una sede por id
   getById: async (id_sede) => {
     const [rows] = await db.query(
       "SELECT id_sede, id_ied, direccion, tipo FROM sede WHERE id_sede = ?",
@@ -30,10 +29,10 @@ const Sede = {
   },
 
   // Actualizar sede
-  update: async (id_sede, { direccion, tipo }) => {
+  update: async (id_sede, { id_ied, direccion, tipo }) => {
     const [result] = await db.query(
-      "UPDATE sede SET direccion = ?, tipo = ? WHERE id_sede = ?",
-      [direccion, tipo, id_sede]
+      "UPDATE sede SET id_ied = ?, direccion = ?, tipo = ? WHERE id_sede = ?",
+      [id_ied, direccion, tipo, id_sede]
     );
     return result;
   },
@@ -48,4 +47,4 @@ const Sede = {
   },
 };
 
-export default Sede;
+export default SEDE;
