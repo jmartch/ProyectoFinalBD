@@ -101,6 +101,9 @@ CREATE TABLE estudiante (
   telefono_acudiente VARCHAR(15) NOT NULL
 );
 
+INSERT INTO matricula (id_aula, doc_estudiante, fecha_inicio, fecha_fin)
+VALUES (6, 1001, '2025-01-01', NULL);
+
 -- 9. Tabla TUTOR
 CREATE TABLE tutor (
   id_tutor INT AUTO_INCREMENT PRIMARY KEY
