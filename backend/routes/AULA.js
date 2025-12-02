@@ -1,13 +1,18 @@
-// routes/aula.routes.js
 import { Router } from "express";
-import * as aulaController from "../controllers/AULA.controller.js";
+import {
+  getAllAulas,
+  getAulaById,
+  createAula,
+  updateAula,
+  deleteAula,
+} from "../controllers/AULA.controller.js";
 
 const router = Router();
 
-router.get("/", aulaController.getAllAulas);
-router.get("/:id", aulaController.getAulaById);
-router.post("/", aulaController.createAula);
-router.put("/:id", aulaController.updateAula);
-router.delete("/:id", aulaController.deleteAula);
+router.get("/", getAllAulas);
+router.get("/:id", getAulaById);
+router.post("/", createAula);
+router.put("/:id", updateAula);
+router.delete("/:id", deleteAula);
 
 export default router;

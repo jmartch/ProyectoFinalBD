@@ -2,16 +2,17 @@
 import Usuario from "../models/USUARIO.model.js";
 import bcrypt from "bcrypt";
 
+const VALID_ROLES = ["ADMIN", "ADMINISTRATIVO", "TUTOR"];
+
 export const getAllUsuarios = async (req, res) => {
   try {
     const usuarios = await Usuario.getAll();
-    // No enviar contraseñas en la respuesta
     const usuariosSinPassword = usuarios.map(({ contraseña, ...usuario }) => usuario);
     res.json(usuariosSinPassword);
   } catch (error) {
     res.status(500).json({
       message: "Error al obtener los usuarios",
-      error: error.message
+      error: error.message,
     });
   }
 };
@@ -22,58 +23,52 @@ export const getUsuarioById = async (req, res) => {
     const usuarioData = await Usuario.getById(usuario);
 
     if (!usuarioData) {
-      return res.status(404).json({
-        message: "Usuario no encontrado"
-      });
+      return res.status(404).json({ message: "Usuario no encontrado" });
     }
 
-    // No enviar contraseña en la respuesta
     const { contraseña, ...usuarioSinPassword } = usuarioData;
     res.json(usuarioSinPassword);
   } catch (error) {
     res.status(500).json({
       message: "Error al obtener el usuario",
-      error: error.message
+      error: error.message,
     });
   }
 };
 
 export const createUsuario = async (req, res) => {
-  console.log("BODY RECIBIDO:", req.body);  
+  console.log("BODY RECIBIDO:", req.body);
   try {
     const { usuario, doc_funcionario, contraseña, rol } = req.body;
 
-    // Validación de campos obligatorios
     if (!usuario || !doc_funcionario || !contraseña || !rol) {
       return res.status(400).json({
-        message: "Faltan campos requeridos: usuario, doc_funcionario, contraseña, rol"
+        message:
+          "Faltan campos requeridos: usuario, doc_funcionario, contraseña, rol",
       });
     }
 
-    // Validación de longitud de usuario
     if (usuario.length < 3 || usuario.length > 50) {
       return res.status(400).json({
-        message: "El usuario debe tener entre 3 y 50 caracteres"
+        message: "El usuario debe tener entre 3 y 50 caracteres",
       });
     }
 
-    // Validación de contraseña
     if (contraseña.length < 6) {
       return res.status(400).json({
-        message: "La contraseña debe tener al menos 6 caracteres"
+        message: "La contraseña debe tener al menos 6 caracteres",
       });
     }
 
-    // Validación de rol
-    const rolesValidos = ['admin', 'profesor', 'coordinador', 'secretario'];
-    const rolNormalizado = rol.toLowerCase();
-    if (!rolesValidos.includes(rolNormalizado)) {
+    // 🔥 normalizamos rol en MAYÚSCULAS
+    const rolNormalizado = rol.toUpperCase();
+    if (!VALID_ROLES.includes(rolNormalizado)) {
       return res.status(400).json({
-        message: "Rol inválido. Valores permitidos: admin, profesor, coordinador, secretario"
+        message:
+          "Rol inválido. Valores permitidos: ADMIN, ADMINISTRATIVO, TUTOR",
       });
     }
 
-    // Hashear la contraseña
     const saltRounds = 10;
     const hashedPassword = await bcrypt.hash(contraseña, saltRounds);
 
@@ -81,33 +76,31 @@ export const createUsuario = async (req, res) => {
       usuario,
       doc_funcionario,
       contraseña: hashedPassword,
-      rol: rolNormalizado
+      rol: rolNormalizado,
     });
 
     res.status(201).json({
       message: "Usuario creado exitosamente",
       data: {
         usuario,
-        doc_funcionario,        // 🔥 corregido (antes: id_funcionario)
-        rol: rolNormalizado
-      }
+        doc_funcionario,
+        rol: rolNormalizado,
+      },
     });
   } catch (error) {
-    // Manejo de usuario duplicado
-    if (error.code === 'ER_DUP_ENTRY') {
+    if (error.code === "ER_DUP_ENTRY") {
       return res.status(409).json({
-        message: "Ya existe un usuario con ese nombre"
+        message: "Ya existe un usuario con ese nombre",
       });
     }
-    // Manejo de llave foránea inválida (funcionario no existe)
-    if (error.code === 'ER_NO_REFERENCED_ROW_2') {
+    if (error.code === "ER_NO_REFERENCED_ROW_2") {
       return res.status(404).json({
-        message: "El funcionario especificado no existe"
+        message: "El funcionario especificado no existe",
       });
     }
     res.status(500).json({
       message: "Error al crear el usuario",
-      error: error.message
+      error: error.message,
     });
   }
 };
@@ -117,37 +110,33 @@ export const updateUsuario = async (req, res) => {
     const { usuario } = req.params;
     const data = { ...req.body };
 
-    // Validar que haya datos para actualizar
     if (Object.keys(data).length === 0) {
       return res.status(400).json({
-        message: "No se proporcionaron datos para actualizar"
+        message: "No se proporcionaron datos para actualizar",
       });
     }
 
-    // No permitir actualizar el nombre de usuario
     if (data.usuario) {
       return res.status(400).json({
-        message: "No se puede actualizar el nombre de usuario"
+        message: "No se puede actualizar el nombre de usuario",
       });
     }
 
-    // Validación de rol (si se proporciona)
     if (data.rol) {
-      const rolesValidos = ['admin', 'profesor', 'coordinador', 'secretario'];
-      const rolNormalizado = data.rol.toLowerCase();
-      if (!rolesValidos.includes(rolNormalizado)) {
+      const rolNormalizado = data.rol.toUpperCase();
+      if (!VALID_ROLES.includes(rolNormalizado)) {
         return res.status(400).json({
-          message: "Rol inválido. Valores permitidos: admin, profesor, coordinador, secretario"
+          message:
+            "Rol inválido. Valores permitidos: ADMIN, ADMINISTRATIVO, TUTOR",
         });
       }
       data.rol = rolNormalizado;
     }
 
-    // Si se actualiza la contraseña, hashearla
     if (data.contraseña) {
       if (data.contraseña.length < 6) {
         return res.status(400).json({
-          message: "La contraseña debe tener al menos 6 caracteres"
+          message: "La contraseña debe tener al menos 6 caracteres",
         });
       }
       const saltRounds = 10;
@@ -158,26 +147,24 @@ export const updateUsuario = async (req, res) => {
 
     if (result.affectedRows === 0) {
       return res.status(404).json({
-        message: "Usuario no encontrado"
+        message: "Usuario no encontrado",
       });
     }
 
-    // No enviar contraseña en la respuesta
     const { contraseña, ...dataParaRespuesta } = data;
     res.json({
       message: "Usuario actualizado exitosamente",
-      data: { usuario, ...dataParaRespuesta }
+      data: { usuario, ...dataParaRespuesta },
     });
   } catch (error) {
-    // Manejo de llave foránea inválida
-    if (error.code === 'ER_NO_REFERENCED_ROW_2') {
+    if (error.code === "ER_NO_REFERENCED_ROW_2") {
       return res.status(404).json({
-        message: "El funcionario especificado no existe"
+        message: "El funcionario especificado no existe",
       });
     }
     res.status(500).json({
       message: "Error al actualizar el usuario",
-      error: error.message
+      error: error.message,
     });
   }
 };
@@ -189,23 +176,23 @@ export const deleteUsuario = async (req, res) => {
 
     if (result.affectedRows === 0) {
       return res.status(404).json({
-        message: "Usuario no encontrado"
+        message: "Usuario no encontrado",
       });
     }
 
     res.json({
-      message: "Usuario eliminado exitosamente"
+      message: "Usuario eliminado exitosamente",
     });
   } catch (error) {
-    // Manejo de restricciones de llave foránea al eliminar
-    if (error.code === 'ER_ROW_IS_REFERENCED_2') {
+    if (error.code === "ER_ROW_IS_REFERENCED_2") {
       return res.status(409).json({
-        message: "No se puede eliminar el usuario porque tiene registros asociados"
+        message:
+          "No se puede eliminar el usuario porque tiene registros asociados",
       });
     }
     res.status(500).json({
       message: "Error al eliminar el usuario",
-      error: error.message
+      error: error.message,
     });
   }
 };

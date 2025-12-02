@@ -1,254 +1,177 @@
-import { useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
-import { Button } from '../ui/button';
-import { Input } from '../ui/input';
-import { Label } from '../ui/label';
+// src/components/admin/TutorsManager.tsx
+import { useEffect, useState } from "react";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '../ui/select';
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "../ui/card";
+import { Button } from "../ui/button";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '../ui/dialog';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
-import { Badge } from '../ui/badge';
-import { persons, tutorAssignments, aulas, documentTypes } from '../../lib/mockData';
-import { Plus, UserCog } from 'lucide-react';
-import { UserRole } from '../../types';
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "../ui/table";
+import { Badge } from "../ui/badge";
+import { Plus, RefreshCw, Trash2 } from "lucide-react";
+import {
+  fetchTutores,
+  createTutor,
+  deleteTutor,
+  TutorRow,
+} from "../../lib/api";
 
 export function TutorsManager() {
-  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [tutores, setTutores] = useState<TutorRow[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [creating, setCreating] = useState(false);
+  const [deletingId, setDeletingId] = useState<number | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
-  const tutors = persons.filter((p) => p.role === UserRole.TUTOR);
+  const loadTutores = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const data = await fetchTutores();
+      setTutores(data);
+    } catch (err: any) {
+      console.error(err);
+      setError(err.message || "Error al cargar tutores");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadTutores();
+  }, []);
+
+  const handleCreate = async () => {
+    try {
+      setCreating(true);
+      setError(null);
+      const nuevo = await createTutor();
+      setTutores((prev) => [...prev, nuevo]);
+    } catch (err: any) {
+      console.error(err);
+      setError(err.message || "Error al crear tutor");
+    } finally {
+      setCreating(false);
+    }
+  };
+
+  const handleDelete = async (id_tutor: number) => {
+    const ok = window.confirm(
+      `¿Seguro que quieres eliminar el tutor #${id_tutor}?`
+    );
+    if (!ok) return;
+
+    try {
+      setDeletingId(id_tutor);
+      setError(null);
+      await deleteTutor(id_tutor);
+      setTutores((prev) => prev.filter((t) => t.id_tutor !== id_tutor));
+    } catch (err: any) {
+      console.error(err);
+      setError(err.message || "Error al eliminar tutor");
+    } finally {
+      setDeletingId(null);
+    }
+  };
 
   return (
-    <div className="space-y-6 max-w-6xl mx-auto">
+    <div className="space-y-6">
+      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-semibold">Gestión de Tutores</h2>
+          <h2 className="text-2xl">Gestión de Tutores</h2>
           <p className="text-gray-600 mt-1">
-            Administrar tutores y personal del programa
+            Administrar registros de tutores del programa GLOBALENGLISH
           </p>
+          {error && (
+            <p className="text-sm text-red-500 mt-2">
+              {error}
+            </p>
+          )}
         </div>
-        <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-          <DialogTrigger asChild>
-            <Button>
-              <Plus className="w-4 h-4 mr-2" />
-              Nuevo Tutor
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>Contratar Nuevo Personal</DialogTitle>
-              <DialogDescription>
-                Ingrese la información de la persona a contratar
-              </DialogDescription>
-            </DialogHeader>
-            <form
-              className="space-y-4"
-              onSubmit={(e) => {
-                e.preventDefault();
-                setIsAddDialogOpen(false);
-              }}
-            >
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="firstName">Nombres</Label>
-                  <Input id="firstName" placeholder="María" required />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="lastName">Apellidos</Label>
-                  <Input id="lastName" placeholder="González López" required />
-                </div>
-              </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="docType">Tipo de Documento</Label>
-                  <Select>
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Seleccione tipo" />
-                    </SelectTrigger>
-                    <SelectContent className="(--radix-select-trigger-width) rounded-lg border border-slate-200 bg-white shadow-lg">
-                      {documentTypes.map((dt) => (
-                        <SelectItem key={dt.id} value={dt.id}>
-                          {dt.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="docNumber">Número de Documento</Label>
-                  <Input id="docNumber" placeholder="1234567890" required />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="email">Email</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    placeholder="tutor@globalenglish.edu"
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="phone">Teléfono</Label>
-                  <Input id="phone" type="tel" placeholder="3001234567" required />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="role">Rol/Perfil</Label>
-                  <Select>
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Seleccione rol" />
-                    </SelectTrigger>
-                    <SelectContent className="(--radix-select-trigger-width) rounded-lg border border-slate-200 bg-white shadow-lg">
-                      <SelectItem value="TUTOR">Tutor</SelectItem>
-                      <SelectItem value="ADMINISTRATIVO">Administrativo</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="hiredDate">Fecha de Contratación</Label>
-                  <Input id="hiredDate" type="date" required />
-                </div>
-              </div>
-
-              <div className="flex justify-end gap-2 pt-4">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setIsAddDialogOpen(false)}
-                >
-                  Cancelar
-                </Button>
-                <Button type="submit">Contratar Personal</Button>
-              </div>
-            </form>
-          </DialogContent>
-        </Dialog>
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={loadTutores}
+            disabled={loading}
+            title="Refrescar lista"
+          >
+            <RefreshCw className="w-4 h-4" />
+          </Button>
+          <Button onClick={handleCreate} disabled={creating}>
+            <Plus className="w-4 h-4 mr-2" />
+            {creating ? "Creando..." : "Nuevo Tutor"}
+          </Button>
+        </div>
       </div>
 
-      {/* Tutors Table */}
+      {/* Lista de tutores */}
       <Card>
         <CardHeader>
-          <CardTitle>Personal Contratado</CardTitle>
-          <CardDescription>{tutors.length} tutores activos</CardDescription>
+          <CardTitle>Tutores Registrados</CardTitle>
+          <CardDescription>
+            {loading
+              ? "Cargando tutores..."
+              : `${tutores.length} tutor(es) encontrados`}
+          </CardDescription>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Nombre Completo</TableHead>
-                <TableHead>Documento</TableHead>
-                <TableHead>Email</TableHead>
-                <TableHead>Teléfono</TableHead>
-                <TableHead>Aulas Asignadas</TableHead>
-                <TableHead>Fecha Contratación</TableHead>
-                <TableHead>Estado</TableHead>
-                <TableHead>Acciones</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {tutors.map((tutor) => {
-                const docType = documentTypes.find(
-                  (dt) => dt.id === tutor.documentTypeId,
-                );
-                const assignments = tutorAssignments.filter(
-                  (ta) => ta.tutorId === tutor.id && ta.isActive,
-                );
-
-                return (
-                  <TableRow key={tutor.id}>
+          {tutores.length === 0 && !loading ? (
+            <div className="text-center py-8 text-gray-500">
+              <p className="mb-2">Aún no hay tutores registrados.</p>
+              <p className="text-sm">
+                Usa el botón <strong>“Nuevo Tutor”</strong> para crear el
+                primero.
+              </p>
+            </div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>ID Tutor</TableHead>
+                  <TableHead>Estado</TableHead>
+                  <TableHead className="text-right">Acciones</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {tutores.map((tutor) => (
+                  <TableRow key={tutor.id_tutor}>
+                    <TableCell>#{tutor.id_tutor}</TableCell>
                     <TableCell>
-                      {tutor.firstName} {tutor.lastName}
+                      <Badge variant="outline">Activo</Badge>
                     </TableCell>
-                    <TableCell>
-                      <div className="text-sm">
-                        <div>{docType?.code}</div>
-                        <div className="text-gray-600">{tutor.documentNumber}</div>
-                      </div>
-                    </TableCell>
-                    <TableCell>{tutor.email}</TableCell>
-                    <TableCell>{tutor.phone}</TableCell>
-                    <TableCell>
-                      <Badge variant="outline">{assignments.length} aulas</Badge>
-                    </TableCell>
-                    <TableCell>
-                      {tutor.hiredDate?.toLocaleDateString('es-CO')}
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant={tutor.isActive ? 'default' : 'secondary'}>
-                        {tutor.isActive ? 'Activo' : 'Inactivo'}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <Button size="sm" variant="ghost">
-                        Ver
+                    <TableCell className="text-right">
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        onClick={() => handleDelete(tutor.id_tutor)}
+                        disabled={deletingId === tutor.id_tutor}
+                        title="Eliminar tutor"
+                      >
+                        <Trash2 className="w-4 h-4" />
                       </Button>
                     </TableCell>
                   </TableRow>
-                );
-              })}
-            </TableBody>
-          </Table>
-
-          {tutors.length === 0 && (
-            <div className="text-center py-12 text-gray-500">
-              <UserCog className="w-16 h-16 mx-auto mb-4 opacity-30" />
-              <p>No hay tutores registrados</p>
-            </div>
+                ))}
+              </TableBody>
+            </Table>
           )}
-        </CardContent>
-      </Card>
-
-      {/* All Personnel Summary */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Resumen de Personal</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="text-center p-4 bg-blue-50 rounded-lg">
-              <div className="text-2xl">
-                {persons.filter(
-                  (p) => p.role === UserRole.TUTOR && p.isActive,
-                ).length}
-              </div>
-              <p className="text-sm text-gray-600 mt-1">Tutores Activos</p>
-            </div>
-            <div className="text-center p-4 bg-green-50 rounded-lg">
-              <div className="text-2xl">
-                {persons.filter(
-                  (p) => p.role === UserRole.ADMINISTRATIVO && p.isActive,
-                ).length}
-              </div>
-              <p className="text-sm text-gray-600 mt-1">Administrativos</p>
-            </div>
-            <div className="text-center p-4 bg-purple-50 rounded-lg">
-              <div className="text-2xl">
-                {persons.filter(
-                  (p) => p.role === UserRole.ADMINISTRADOR && p.isActive,
-                ).length}
-              </div>
-              <p className="text-sm text-gray-600 mt-1">Administradores</p>
-            </div>
-          </div>
         </CardContent>
       </Card>
     </div>
   );
 }
+
+// (opcional) también lo exportamos por defecto
+export default TutorsManager;

@@ -3,7 +3,6 @@
 import * as React from "react";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { X } from "lucide-react";
-
 import { cn } from "./utils";
 
 const Dialog = DialogPrimitive.Root;
@@ -11,7 +10,6 @@ const DialogTrigger = DialogPrimitive.Trigger;
 const DialogPortal = DialogPrimitive.Portal;
 const DialogClose = DialogPrimitive.Close;
 
-// Dejamos definido el overlay, pero completamente transparente por si lo quieres reutilizar
 const DialogOverlay = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Overlay>,
   React.ComponentPropsWithoutRef<typeof DialogPrimitive.Overlay>
@@ -19,7 +17,8 @@ const DialogOverlay = React.forwardRef<
   <DialogPrimitive.Overlay
     ref={ref}
     className={cn(
-      "fixed inset-0 z-40 bg-transparent",
+      // 👇 overlay muy clarito gris
+      "fixed inset-0 z-40 bg-gray-900/2", 
       className,
     )}
     {...props}
@@ -27,27 +26,28 @@ const DialogOverlay = React.forwardRef<
 ));
 DialogOverlay.displayName = DialogPrimitive.Overlay.displayName;
 
+
 const DialogContent = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Content>,
   React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content>
 >(({ className, children, ...props }, ref) => (
   <DialogPortal>
-    {/* 👉 Si NO quieres overlay en absoluto, deja comentada esta línea */}
-    {/* <DialogOverlay /> */}
+    <DialogOverlay />
     <DialogPrimitive.Content
       ref={ref}
+      data-slot="dialog-content"
       className={cn(
-        "fixed left-1/2 top-1/2 z-50 grid w-full max-w-2xl",
-        "-translate-x-1/2 -translate-y-1/2 gap-4",
-        "rounded-xl border border-gray-200 bg-white",
-        "p-6 shadow-2xl outline-none",
-        "max-h-[90vh] overflow-y-auto",
+        // 👇 AQUÍ FORZAMOS FONDO BLANCO OPACO
+        "fixed left-1/2 top-1/2 z-50 grid w-full max-w-2xl -translate-x-1/2 -translate-y-1/2 gap-6 rounded-xl border bg-white text-foreground shadow-xl p-6 focus:outline-none",
         className,
       )}
       {...props}
     >
       {children}
-      <DialogClose className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none">
+      <DialogClose
+        className="absolute right-4 top-4 rounded-full opacity-70 transition hover:opacity-100 focus:outline-none"
+        aria-label="Cerrar"
+      >
         <X className="h-4 w-4" />
         <span className="sr-only">Cerrar</span>
       </DialogClose>
@@ -56,32 +56,13 @@ const DialogContent = React.forwardRef<
 ));
 DialogContent.displayName = DialogPrimitive.Content.displayName;
 
-function DialogHeader({
+const DialogHeader = ({
   className,
   ...props
-}: React.HTMLAttributes<HTMLDivElement>) {
-  return (
-    <div
-      className={cn("flex flex-col space-y-1.5 text-left", className)}
-      {...props}
-    />
-  );
-}
-
-function DialogFooter({
-  className,
-  ...props
-}: React.HTMLAttributes<HTMLDivElement>) {
-  return (
-    <div
-      className={cn(
-        "flex flex-col-reverse gap-2 sm:flex-row sm:justify-end",
-        className,
-      )}
-      {...props}
-    />
-  );
-}
+}: React.HTMLAttributes<HTMLDivElement>) => (
+  <div className={cn("flex flex-col space-y-1.5 text-left", className)} {...props} />
+);
+DialogHeader.displayName = "DialogHeader";
 
 const DialogTitle = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Title>,
@@ -111,11 +92,10 @@ export {
   Dialog,
   DialogTrigger,
   DialogPortal,
-  DialogClose,
   DialogOverlay,
+  DialogClose,
   DialogContent,
   DialogHeader,
-  DialogFooter,
   DialogTitle,
   DialogDescription,
 };

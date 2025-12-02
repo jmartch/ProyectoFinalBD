@@ -1,13 +1,23 @@
-// routes/estudiante.routes.js
+// backend/routes/ESTUDIANTE.js
 import { Router } from "express";
-import * as estudianteController from "../controllers/ESTUDIANTE.controller.js";
+import {
+  getAllEstudiantes,
+  getAllEstudiantesDetalle,
+  getEstudianteById,
+  createEstudiante,
+  updateEstudiante,
+  deleteEstudiante,
+} from "../controllers/ESTUDIANTE.controller.js";
 
 const router = Router();
 
-router.get("/", estudianteController.getAllEstudiantes);
-router.get("/:doc", estudianteController.getEstudianteById);
-router.post("/", estudianteController.createEstudiante);
-router.put("/:doc", estudianteController.updateEstudiante);
-router.delete("/:doc", estudianteController.deleteEstudiante);
+// 👇 IMPORTANTE: /detalle va ANTES de "/:doc"
+router.get("/detalle", getAllEstudiantesDetalle);
 
-export default router; 
+router.get("/", getAllEstudiantes);
+router.get("/:doc", getEstudianteById);
+router.post("/", createEstudiante);
+router.put("/:doc", updateEstudiante);
+router.delete("/:doc", deleteEstudiante);
+
+export default router;
