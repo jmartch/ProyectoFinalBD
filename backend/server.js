@@ -29,6 +29,10 @@ import programaRoutes from './routes/PROGRAMA.js';
 import semanaRoutes from './routes/SEMANA.js';
 import calendarRoutes from './routes/CALENDAR.js';
 import festivoRoutes from './routes/FESTIVOS.js';
+/* Rutas adicionales */
+import asignacionAulaHorarioRoutes from "./routes/ASIGNACION_AULA_HORARIO.js";
+import reportesRoutes from "./routes/REPORTES.js"; 
+
 
 dotenv.config();
 
@@ -59,7 +63,7 @@ app.use('/api/motivos', motivoRoutes);
 app.use('/api/matriculas', matriculaRoutes);
 app.use('/api/registro_clases', registroClasesRoutes);
 app.use('/api/componentes', componenteRoutes);
-app.use('/api/detalle_nota', detalleNotaRoutes);
+app.use('/api/detalle-nota', detalleNotaRoutes);
 
 // Funcionarios / usuarios
 app.use('/api/funcionarios', funcionarioRoutes);
@@ -77,7 +81,9 @@ app.use('/api/semanas', semanaRoutes);
 app.use('/api/calendar', calendarRoutes);
 app.use("/api/auth", authRoutes);
 app.use('/api/festivos', festivoRoutes);
-
+// Rutas adicionales
+app.use('/api/asignacion_aula_horario', asignacionAulaHorarioRoutes);
+app.use('/api/reportes', reportesRoutes);
 
 // =========================
 // Health check

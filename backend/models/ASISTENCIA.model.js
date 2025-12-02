@@ -43,4 +43,16 @@ export default {
     );
     return result;
   },
+
+  // Nuevo método para obtener asistencia por estudiante
+  async getByEstudiante(doc_estudiante) {
+  const [rows] = await pool.query(
+    "SELECT * FROM asistencia WHERE doc_estudiante = ?",
+    [doc_estudiante]
+  );
+  return rows;
+}
+
 };
+
+

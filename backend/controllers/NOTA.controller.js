@@ -1,6 +1,13 @@
 // controllers/NOTA.controller.js
 import Nota from "../models/NOTA.model.js";
 
+// Nuevo endpoint: Obtener notas por estudiante
+export const getNotasByEstudiante = async (req, res) => {
+  const { doc_estudiante } = req.params;
+  const notas = await Nota.getByStudent(doc_estudiante);
+  res.json(notas);
+};
+
 export const getAllNotas = async (req, res) => {
   try {
     const notas = await Nota.getAll();

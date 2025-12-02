@@ -1,5 +1,5 @@
 const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
-
+import { fetchEstudiantesDetalle, type EstudianteDetalle } from './reportService';
 export interface IED {
   id_ied: number;
   nombre: string;
@@ -458,5 +458,272 @@ export async function deleteComponente(id_componente: number): Promise<void> {
   const body = await res.json().catch(() => ({}));
   if (!res.ok) {
     throw new Error(body.message || "Error al eliminar componente");
+  }
+}
+
+/* --------------------------------------------------
+ * NOTAS Y DETALLES DE NOTAS
+ * -------------------------------------------------- */
+
+export interface Nota {
+  id_nota: number;
+  doc_estudiante: number;
+  definitiva: number;
+}
+
+export interface DetalleNota {
+  id_detalle_nota: number;
+  id_nota: number;
+  id_componente: number;
+  nota: number;
+}
+
+// GET /api/notas/estudiante/:doc_estudiante
+export async function getNotaByEstudiante(doc_estudiante: number): Promise<Nota | null> {
+  try {
+    const res = await fetch(`${API_BASE_URL}/api/notas/estudiante/${doc_estudiante}`);
+    if (!res.ok) return null;
+    const body = await res.json();
+    return body.data || null;
+  } catch (err) {
+    console.error('Error fetching nota:', err);
+    return null;
+  }
+}
+
+// POST /api/notas
+export async function createNota(input: {
+  doc_estudiante: number;
+  definitiva: number;
+}): Promise<any> {
+  const res = await fetch(`${API_BASE_URL}/api/notas`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(input),
+  });
+
+  const body = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    throw new Error(body.message || "Error al crear nota");
+  }
+
+  return body;
+}
+
+// GET /api/detalles-nota/:id_nota
+export async function getDetallesNotaByIdNota(id_nota: number): Promise<DetalleNota[]> {
+  try {
+    const res = await fetch(`${API_BASE_URL}/api/detalles-nota/${id_nota}`);
+    if (!res.ok) return [];
+    const body = await res.json();
+    return (body.data || body) as DetalleNota[];
+  } catch (err) {
+    console.error('Error fetching detalles nota:', err);
+    return [];
+  }
+}
+
+// POST /api/detalles-nota
+export async function saveDetalleNota(input: {
+  id_nota: number;
+  id_componente: number;
+  nota: number;
+}): Promise<DetalleNota> {
+  const res = await fetch(`${API_BASE_URL}/api/detalles-nota`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(input),
+  });
+
+  const body = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    throw new Error(body.message || "Error al guardar detalle de nota");
+  }
+
+  return body.data as DetalleNota;
+}
+
+// GET /api/componentes/periodo/:id_periodo
+export async function getComponentesByPeriodo(id_periodo: number): Promise<Componente[]> {
+  try {
+    const res = await fetch(`${API_BASE_URL}/api/componentes?id_periodo=${id_periodo}`);
+    if (!res.ok) return [];
+    const body = await res.json();
+    return (body.data || body) as Componente[];
+  } catch (err) {
+    console.error('Error fetching componentes:', err);
+    return [];
+  }
+}
+
+/* --------------------------------------------------
+ * REPORTES
+ * -------------------------------------------------- */
+
+export interface ReporteAsistenciaEstudiante {
+  numero_semana: number;
+  fecha: string;
+  dictada: boolean;
+  asistio: boolean;
+}
+
+export interface BoletinCalificaciones {
+  estudiante: {
+    doc_estudiante: number;
+    nombre1: string;
+    apellido1: string;
+    nombre_ied: string;
+    grado: number;
+  };
+  periodos: Array<{
+    periodo: Periodo;
+    componentes: Array<{
+      componente: Componente;
+      nota: number;
+    }>;
+    definitiva: number;
+  }>;
+  promedioGeneral: number;
+}
+
+// GET /api/reportes/asistencia-estudiante/:doc_estudiante
+export async function getReporteAsistenciaEstudiante(
+  doc_estudiante: number,
+  fecha_inicio?: string,
+  fecha_fin?: string
+): Promise<ReporteAsistenciaEstudiante[]> {
+  try {
+    let url = `${API_BASE_URL}/api/reportes/asistencia-estudiante/${doc_estudiante}`;
+    const params = new URLSearchParams();
+    if (fecha_inicio) params.append('fecha_inicio', fecha_inicio);
+    if (fecha_fin) params.append('fecha_fin', fecha_fin);
+    if (params.toString()) url += '?' + params.toString();
+
+    const res = await fetch(url);
+    if (!res.ok) return [];
+    const body = await res.json();
+    return (body.data || body) as ReporteAsistenciaEstudiante[];
+  } catch (err) {
+    console.error('Error fetching attendance report:', err);
+    return [];
+  }
+}
+
+// GET /api/reportes/boletin-calificaciones/:doc_estudiante
+export async function getBoletinCalificaciones(doc_estudiante: number): Promise<BoletinCalificaciones | null> {
+  try {
+    const res = await fetch(`${API_BASE_URL}/api/reportes/boletin-calificaciones/${doc_estudiante}`);
+    if (!res.ok) return null;
+    const body = await res.json();
+    return (body.data || body) as BoletinCalificaciones;
+  } catch (err) {
+    console.error('Error fetching boletin:', err);
+    return null;
+  }
+}
+
+// ============================================
+// TUTORES - GESTIÓN COMPLETA (ADICIONAL)
+// ============================================
+
+export interface TutorFull {
+  id_tutor: number;
+  doc_funcionario: string;
+  tipo_doc: string;
+  nombre1: string;
+  nombre2?: string;
+  apellido1: string;
+  apellido2?: string;
+  correo: string;
+  telefono: string;
+  fecha_contrato: string;
+  username?: string;
+  aulas_count: number;
+  estudiantes_count: number;
+}
+
+export interface TutorAulaEstudiantes {
+  id_aula: number;
+  grado: number;
+  nombre_ied?: string;
+  direccion_sede?: string;
+  estudiantes: Array<{
+    doc_estudiante: number;
+    tipo_doc: string;
+    nombre1: string;
+    nombre2?: string;
+    apellido1: string;
+    apellido2?: string;
+    sexo: string;
+    correo_acudiente?: string;
+    telefono_acudiente?: string;
+  }>;
+}
+
+// GET /api/tutores/full - Obtener tutores con conteo de aulas y estudiantes
+export async function fetchTutoresFull(): Promise<TutorFull[]> {
+  const res = await fetch(`${API_BASE_URL}/api/tutores/full`);
+  if (!res.ok) {
+    throw new Error("Error al obtener tutores completos");
+  }
+  const data = await res.json();
+  return Array.isArray(data) ? data : data.data || [];
+}
+
+// GET /api/tutores/:doc_funcionario/aulas-estudiantes
+export async function fetchTutorAulasYEstudiantes(
+  doc_funcionario: string
+): Promise<TutorAulaEstudiantes[]> {
+  const res = await fetch(
+    `${API_BASE_URL}/api/tutores/${doc_funcionario}/aulas-estudiantes`
+  );
+  if (!res.ok) {
+    throw new Error("Error al obtener aulas y estudiantes del tutor");
+  }
+  const data = await res.json();
+  return Array.isArray(data) ? data : data.data || [];
+}
+
+// POST /api/aula-tutor - Asignar aula a tutor
+export async function assignAulaToTutor(input: {
+  id_tutor: number;
+  id_aula: number;
+  fecha_asignacion: string; // YYYY-MM-DD
+  fecha_fin?: string; // YYYY-MM-DD (opcional)
+}): Promise<void> {
+  const res = await fetch(`${API_BASE_URL}/api/aula-tutor`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(input),
+  });
+
+  const body = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    throw new Error(body.message || "Error al asignar aula a tutor");
+  }
+}
+
+// POST /api/funcionarios/crear-con-tutor - Crear funcionario y opcionalmente tutor
+export async function createFuncionarioFromForm(input: {
+  tipo_doc: string;
+  doc: string;
+  nombre1: string;
+  nombre2?: string | null;
+  apellido1: string;
+  apellido2?: string | null;
+  correo: string;
+  telefono: string;
+  fecha_contrato: string; // YYYY-MM-DD
+  shouldCreateTutor: boolean;
+}): Promise<void> {
+  const res = await fetch(`${API_BASE_URL}/api/funcionarios/crear-con-tutor`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(input),
+  });
+
+  const body = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    throw new Error(body.message || "Error al crear funcionario");
   }
 }

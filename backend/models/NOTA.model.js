@@ -41,5 +41,15 @@ export default {
       [id_nota]
     );
     return result;
-  }
+  },
+  // Nuevo método para obtener notas por estudiante
+  async getByEstudiante(doc_estudiante) {
+  const [rows] = await pool.query(
+    `SELECT *
+     FROM nota n
+     WHERE n.doc_estudiante = ?`,
+    [doc_estudiante]
+  );
+  return rows;
+}
 };
