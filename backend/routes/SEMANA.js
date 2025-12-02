@@ -1,13 +1,24 @@
-// routes/SEMANA.routes.js
-import { Router } from "express";
-import * as semanaController from "../controllers/SEMANA.controller.js";
+// routes/SEMANA.js
+import express from "express";
+import {
+  getAllSemanas,
+  getSemanaById,
+  createSemana,
+  updateSemana,
+  deleteSemana,
+  regenerarCalendarioSemanas,
+} from "../controllers/SEMANA.controller.js";
 
-const router = Router();
+const router = express.Router();
 
-router.get("/", semanaController.getAllSemanas);
-router.get("/:numero_semana", semanaController.getSemanaById);
-router.post("/", semanaController.createSemana);
-router.put("/:numero_semana", semanaController.updateSemana);
-router.delete("/:numero_semana", semanaController.deleteSemana);
+// CRUD de semanas
+router.get("/semanas", getAllSemanas);
+router.get("/semanas/:numero_semana", getSemanaById);
+router.post("/semanas", createSemana);
+router.put("/semanas/:numero_semana", updateSemana);
+router.delete("/semanas/:numero_semana", deleteSemana);
+
+// 🔁 REGENERAR CALENDARIO
+router.post("/semanas/regenerar", regenerarCalendarioSemanas);
 
 export default router;

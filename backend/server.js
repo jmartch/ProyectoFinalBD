@@ -28,6 +28,7 @@ import aulaTutorRoutes from "./routes/AULA_TUTOR.js";
 import programaRoutes from "./routes/PROGRAMA.js";
 import semanaRoutes from "./routes/SEMANA.js";
 import calendarRoutes from './routes/CALENDAR.js';
+import festivoRoutes from './routes/FESTIVOS.js';
 
 dotenv.config();
 const app = express();
@@ -60,6 +61,8 @@ app.use("/api/programas", programaRoutes);
 app.use("/api/semanas", semanaRoutes);
 app.use('/api/calendar', calendarRoutes);
 app.use("/api/auth", authRoutes);
+app.use('/api/festivos', festivoRoutes);
+
 
 
 // Health check

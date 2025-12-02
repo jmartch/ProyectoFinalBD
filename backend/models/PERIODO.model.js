@@ -1,69 +1,129 @@
 // models/PERIODO.model.js
-import db from "../config/db.js";
+import pool from "../config/db.js";
 
-export default {
-  getAll: async () => {
-    const [rows] = await db.query("SELECT * FROM periodo");
-    return rows;
-  },
-
-  getById: async (id_periodo) => {
-    const [rows] = await db.query(
-      "SELECT * FROM periodo WHERE id_periodo = ?",
-      [id_periodo]
-    );
-    return rows[0];
-  },
-
-  create: async ({ fecha_inicio, fecha_fin }) => {
-    const [result] = await db.query(
-      "INSERT INTO periodo (fecha_inicio, fecha_fin) VALUES (?, ?)",
-      [fecha_inicio, fecha_fin]
-    );
-    return { insertId: result.insertId };
-  },
-
-  updateById: async (id_periodo, { fecha_inicio, fecha_fin }) => {
-    const [result] = await db.query(
-      "UPDATE periodo SET fecha_inicio = ?, fecha_fin = ? WHERE id_periodo = ?",
-      [fecha_inicio, fecha_fin, id_periodo]
-    );
-    return result;
-  },
-
-  removeById: async (id_periodo) => {
-    const [result] = await db.query(
-      "DELETE FROM periodo WHERE id_periodo = ?",
-      [id_periodo]
-    );
-    return result;
-  },
-
-  // Periodos "activos" = fecha actual dentro del rango
-  getActive: async () => {
-    const [rows] = await db.query(
-      "SELECT * FROM periodo WHERE CURDATE() BETWEEN fecha_inicio AND fecha_fin"
+const Periodo = {
+  // Obtener todos los periodos (con info del programa)
+  async getAll() {
+    const [rows] = await pool.query(
+      `
+      SELECT 
+        p.id_periodo,
+        p.id_programa,
+        p.fecha_inicio,
+        p.fecha_fin,
+        prog.nombre_programa AS nombre_programa
+      FROM periodo p
+      INNER JOIN programa prog 
+        ON prog.id_programa = p.id_programa
+      ORDER BY p.id_programa, p.fecha_inicio
+      `
     );
     return rows;
   },
 
-  // Verificar si un rango [fecha_inicio, fecha_fin] se solapa con otro periodo
-  // Si se pasa excludeId, se excluye ese id_periodo (para updates)
-  checkOverlap: async (fecha_inicio, fecha_fin, excludeId = null) => {
+  async getById(id) {
+    const [rows] = await pool.query(
+      `
+      SELECT 
+        p.id_periodo,
+        p.id_programa,
+        p.fecha_inicio,
+        p.fecha_fin,
+        prog.nombre_programa AS nombre_programa
+      FROM periodo p
+      INNER JOIN programa prog 
+        ON prog.id_programa = p.id_programa
+      WHERE p.id_periodo = ?
+      `,
+      [id]
+    );
+    return rows[0] || null;
+  },
+
+  // Periodos "activos" (fecha actual dentro del rango)
+  async getActive() {
+    const [rows] = await pool.query(
+      `
+      SELECT 
+        p.id_periodo,
+        p.id_programa,
+        p.fecha_inicio,
+        p.fecha_fin,
+        prog.nombre_programa AS nombre_programa
+      FROM periodo p
+      INNER JOIN programa prog 
+        ON prog.id_programa = p.id_programa
+      WHERE CURDATE() BETWEEN p.fecha_inicio AND p.fecha_fin
+      ORDER BY p.id_programa, p.fecha_inicio
+      `
+    );
+    return rows;
+  },
+
+  async create({ id_programa, fecha_inicio, fecha_fin }) {
+    const [result] = await pool.query(
+      `
+      INSERT INTO periodo (id_programa, fecha_inicio, fecha_fin)
+      VALUES (?, ?, ?)
+      `,
+      [id_programa, fecha_inicio, fecha_fin]
+    );
+    return result;
+  },
+
+  async updateById(id, { id_programa, fecha_inicio, fecha_fin }) {
+    const [result] = await pool.query(
+      `
+      UPDATE periodo
+      SET id_programa = ?, fecha_inicio = ?, fecha_fin = ?
+      WHERE id_periodo = ?
+      `,
+      [id_programa, fecha_inicio, fecha_fin, id]
+    );
+    return result;
+  },
+
+  async removeById(id) {
+    const [result] = await pool.query(
+      `
+      DELETE FROM periodo
+      WHERE id_periodo = ?
+      `,
+      [id]
+    );
+    return result;
+  },
+
+  async checkProgramaExists(id_programa) {
+    const [rows] = await pool.query(
+      `
+      SELECT 1 AS existe
+      FROM programa
+      WHERE id_programa = ?
+      LIMIT 1
+      `,
+      [id_programa]
+    );
+    return rows.length > 0;
+  },
+
+  // Verificar solapamiento de fechas entre periodos
+  async checkOverlap(fecha_inicio, fecha_fin, excludeId = null) {
     let sql = `
-      SELECT COUNT(*) AS count
+      SELECT 1 AS overlap
       FROM periodo
-      WHERE fecha_inicio <= ? 
-        AND fecha_fin   >= ?
+      WHERE NOT (fecha_fin < ? OR fecha_inicio > ?)
     `;
-    const params = [fecha_fin, fecha_inicio];
+    const params = [fecha_inicio, fecha_fin];
 
     if (excludeId) {
       sql += " AND id_periodo <> ?";
       params.push(excludeId);
     }
 
-    const [rows] = await db.query(sql, params);
-    return rows[0].count > 0;
-  }
+    const [rows] = await pool.query(sql, params);
+    return rows.length > 0;
+  },
 };
+
+export default Periodo;
