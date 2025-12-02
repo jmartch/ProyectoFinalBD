@@ -1,22 +1,16 @@
-// routes/registroTutores.routes.js
+// backend/routes/REGISTRO_TUTOR.js
 import { Router } from "express";
-import * as registroTutoresController from "../controllers/REGISTRO_TUTOR.controller.js";
+import {
+  getAllRegistroTutor,
+  createRegistroTutor,
+} from "../controllers/REGISTRO_TUTOR.controller.js";
 
 const router = Router();
 
-router.get("/", registroTutoresController.getAllRegistrosTutores);
-router.get(
-  "/:doc_funcionario/:id_tutor/:fecha_asignacion",
-  registroTutoresController.getRegistroTutoresByKeys
-);
-router.post("/", registroTutoresController.createRegistroTutores);
-router.put(
-  "/:doc_funcionario/:id_tutor/:fecha_asignacion",
-  registroTutoresController.updateRegistroTutoresByKeys
-);
-router.delete(
-  "/:doc_funcionario/:id_tutor/:fecha_asignacion",
-  registroTutoresController.deleteRegistroTutoresByKeys
-);
+// GET /api/registro-tutor
+router.get("/", getAllRegistroTutor);
+
+// POST /api/registro-tutor
+router.post("/", createRegistroTutor);
 
 export default router;

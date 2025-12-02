@@ -110,6 +110,11 @@ CREATE TABLE funcionario (
 INSERT INTO registro_tutor (doc_funcionario, id_tutor, fecha_asignacion)
 VALUES (123456, 1, '2025-01-01');
 
+select * from registro_tutor;
+
+select * from tutor;
+select * from funcionario;
+
 -- 8. Tabla ESTUDIANTE
 CREATE TABLE estudiante (
   doc_estudiante INT PRIMARY KEY,
@@ -127,6 +132,7 @@ CREATE TABLE estudiante (
 CREATE TABLE tutor (
   id_tutor INT AUTO_INCREMENT PRIMARY KEY
 );
+
 
 -- 10. Tabla REGISTRO_TUTOR
 CREATE TABLE registro_tutor (

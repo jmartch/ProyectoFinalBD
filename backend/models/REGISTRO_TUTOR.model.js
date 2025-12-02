@@ -1,50 +1,27 @@
-// models/REGISTRO_TUTORES.model.js
+// backend/models/REGISTRO_TUTOR.model.js
 import db from "../config/db.js";
 
-/*
-Composite PK: (doc_funcionario, id_tutor, fecha_asignacion)
-*/
-
-export default {
+const RegistroTutorModel = {
   getAll: async () => {
-    const [rows] = await db.query("SELECT * FROM REGISTRO_TUTORES");
+    const [rows] = await db.query("SELECT * FROM registro_tutor");
     return rows;
   },
 
-  getByKeys: async (doc_funcionario, id_tutor, fecha_asignacion) => {
-    const [rows] = await db.query(
-      "SELECT * FROM REGISTRO_TUTORES WHERE doc_funcionario = ? AND id_tutor = ? AND fecha_asignacion = ?",
-      [doc_funcionario, id_tutor, fecha_asignacion]
-    );
-    return rows[0];
-  },
-
   create: async ({ doc_funcionario, id_tutor, fecha_asignacion }) => {
-    const [result] = await db.query(
-      "INSERT INTO REGISTRO_TUTORES (doc_funcionario, id_tutor, fecha_asignacion) VALUES (?, ?, ?)",
+    await db.query(
+      `
+      INSERT INTO registro_tutor (doc_funcionario, id_tutor, fecha_asignacion)
+      VALUES (?, ?, ?)
+      `,
       [doc_funcionario, id_tutor, fecha_asignacion]
     );
-    return { insertId: result.insertId };
-  },
 
-  updateByKeys: async (
-    doc_funcionario,
-    id_tutor,
-    fecha_asignacion,
-    { nueva_fecha_asignacion }
-  ) => {
-    const [result] = await db.query(
-      "UPDATE REGISTRO_TUTORES SET fecha_asignacion = ? WHERE doc_funcionario = ? AND id_tutor = ? AND fecha_asignacion = ?",
-      [nueva_fecha_asignacion, doc_funcionario, id_tutor, fecha_asignacion]
-    );
-    return result;
+    return {
+      doc_funcionario,
+      id_tutor,
+      fecha_asignacion,
+    };
   },
-
-  removeByKeys: async (doc_funcionario, id_tutor, fecha_asignacion) => {
-    const [result] = await db.query(
-      "DELETE FROM REGISTRO_TUTORES WHERE doc_funcionario = ? AND id_tutor = ? AND fecha_asignacion = ?",
-      [doc_funcionario, id_tutor, fecha_asignacion]
-    );
-    return result;
-  }
 };
+
+export default RegistroTutorModel;

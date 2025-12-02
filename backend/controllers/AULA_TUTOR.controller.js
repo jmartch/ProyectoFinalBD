@@ -1,47 +1,22 @@
-// controllers/AULA_TUTOR.controller.js
-import Vinculacion from "../models/AULA_TUTOR.model.js";
+// backend/controllers/AULA_TUTOR.controller.js
+import AulaTutor from "../models/AULA_TUTOR.model.js";
 
-export const getAllVinculaciones = async (req, res) => {
+export const getAllAulaTutor = async (req, res) => {
   try {
-    const vinculaciones = await Vinculacion.getAll();
-    res.json(vinculaciones);
+    const rows = await AulaTutor.getAll();
+    res.json(rows);
   } catch (error) {
     res.status(500).json({
-      message: "Error al obtener las vinculaciones",
+      message: "Error al obtener las asignaciones aula-tutor",
       error: error.message,
     });
   }
 };
 
-export const getVinculacionByKeys = async (req, res) => {
-  try {
-    const { id_aula, id_tutor, fecha_asignacion } = req.params;
-    const vinculacion = await Vinculacion.getByKeys(
-      id_aula,
-      id_tutor,
-      fecha_asignacion
-    );
-
-    if (!vinculacion) {
-      return res.status(404).json({
-        message: "Vinculación no encontrada",
-      });
-    }
-
-    res.json(vinculacion);
-  } catch (error) {
-    res.status(500).json({
-      message: "Error al obtener la vinculación",
-      error: error.message,
-    });
-  }
-};
-
-export const createVinculacion = async (req, res) => {
+export const createAulaTutor = async (req, res) => {
   try {
     const { id_aula, id_tutor, fecha_asignacion, fecha_fin } = req.body;
 
-    // Validación de campos obligatorios
     if (!id_aula || !id_tutor || !fecha_asignacion) {
       return res.status(400).json({
         message:
@@ -49,153 +24,34 @@ export const createVinculacion = async (req, res) => {
       });
     }
 
-    // Validación de fechas
-    const fechaRegex = /^\d{4}-\d{2}-\d{2}$/;
-
-    if (!fechaRegex.test(fecha_asignacion)) {
-      return res.status(400).json({
-        message:
-          "Formato de fecha_asignacion inválido. Use YYYY-MM-DD",
-      });
-    }
-
-    if (fecha_fin && !fechaRegex.test(fecha_fin)) {
-      return res.status(400).json({
-        message: "Formato de fecha_fin inválido. Use YYYY-MM-DD",
-      });
-    }
-
-    // Validar que la fecha de vinculación no sea futura
-    const fechaVinculacion = new Date(fecha_asignacion);
-    const hoy = new Date();
-    if (fechaVinculacion > hoy) {
-      return res.status(400).json({
-        message: "La fecha de vinculación no puede ser futura",
-      });
-    }
-
-    const result = await Vinculacion.create({
+    const data = await AulaTutor.create({
       id_aula,
       id_tutor,
       fecha_asignacion,
-      fecha_fin,
+      fecha_fin: fecha_fin || null,
     });
 
     res.status(201).json({
-      message: "Vinculación creada exitosamente",
-      data: {
-        id_aula,
-        id_tutor,
-        fecha_asignacion,
-        fecha_fin: fecha_fin || null,
-      },
-      affectedRows: result.affectedRows,
+      message: "Aula asignada al tutor correctamente",
+      data,
     });
   } catch (error) {
-    // Manejo de vinculación duplicada (PK compuesta)
     if (error.code === "ER_DUP_ENTRY") {
       return res.status(409).json({
         message:
-          "Ya existe una vinculación para este tutor en esta aula en esa fecha",
+          "Ya existe una asignación de este tutor a esa aula en esa fecha",
       });
     }
-    // Manejo de llaves foráneas inválidas
+
     if (error.code === "ER_NO_REFERENCED_ROW_2") {
-      return res.status(404).json({
-        message: "El aula o el tutor especificado no existe",
-      });
-    }
-
-    res.status(500).json({
-      message: "Error al crear la vinculación",
-      error: error.message,
-    });
-  }
-};
-
-export const updateVinculacionByKeys = async (req, res) => {
-  try {
-    const { id_aula, id_tutor, fecha_asignacion } = req.params;
-    const { fecha_fin } = req.body;
-
-    // Validar que haya datos para actualizar
-    if (!fecha_fin) {
       return res.status(400).json({
-        message: "Debe proporcionar la fecha_fin para actualizar",
-      });
-    }
-
-    // Validación de fecha_fin
-    const fechaRegex = /^\d{4}-\d{2}-\d{2}$/;
-    if (!fechaRegex.test(fecha_fin)) {
-      return res.status(400).json({
-        message: "Formato de fecha_fin inválido. Use YYYY-MM-DD",
-      });
-    }
-
-    // Validar que la nueva fecha no sea futura
-    const fechaVinculacion = new Date(fecha_fin);
-    const hoy = new Date();
-    if (fechaVinculacion > hoy) {
-      return res.status(400).json({
-        message: "La fecha de vinculación no puede ser futura",
-      });
-    }
-
-    const result = await Vinculacion.updateByKeys(
-      id_aula,
-      id_tutor,
-      fecha_asignacion,
-      { fecha_fin }
-    );
-
-    if (result.affectedRows === 0) {
-      return res.status(404).json({
-        message: "Vinculación no encontrada",
-      });
-    }
-
-    res.json({
-      message: "Vinculación actualizada exitosamente",
-      data: { id_aula, id_tutor, fecha_asignacion, fecha_fin },
-    });
-  } catch (error) {
-    res.status(500).json({
-      message: "Error al actualizar la vinculación",
-      error: error.message,
-    });
-  }
-};
-
-export const deleteVinculacionByKeys = async (req, res) => {
-  try {
-    const { id_aula, id_tutor, fecha_asignacion } = req.params;
-    const result = await Vinculacion.removeByKeys(
-      id_aula,
-      id_tutor,
-      fecha_asignacion
-    );
-
-    if (result.affectedRows === 0) {
-      return res.status(404).json({
-        message: "Vinculación no encontrada",
-      });
-    }
-
-    res.json({
-      message: "Vinculación eliminada exitosamente",
-    });
-  } catch (error) {
-    // Manejo de restricciones de llave foránea al eliminar
-    if (error.code === "ER_ROW_IS_REFERENCED_2") {
-      return res.status(409).json({
         message:
-          "No se puede eliminar la vinculación porque tiene registros asociados",
+          "No se encontró el aula o el tutor especificado (revisa los IDs)",
       });
     }
 
     res.status(500).json({
-      message: "Error al eliminar la vinculación",
+      message: "Error al asignar aula al tutor",
       error: error.message,
     });
   }
