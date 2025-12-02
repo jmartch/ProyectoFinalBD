@@ -1,8 +1,8 @@
-// models/TUTOR.model.js
+// backend/models/TUTOR.model.js
 import db from "../config/db.js";
 
-export default {
-  // Lista cruda de tutores (solo id_tutor)
+const TutorModel = {
+  // CRUD básico
   getAll: async () => {
     const [rows] = await db.query("SELECT * FROM tutor");
     return rows;
@@ -16,16 +16,14 @@ export default {
     return rows[0];
   },
 
-  // Crea un tutor nuevo (solo genera id_tutor AUTO_INCREMENT)
+  // Crea un tutor nuevo (id_tutor AUTO_INCREMENT)
   create: async () => {
-    const [result] = await db.query(
-      "INSERT INTO tutor (id_tutor) VALUES (NULL)"
-    );
+    const [result] = await db.query("INSERT INTO tutor () VALUES ()");
     return { insertId: result.insertId };
   },
 
-  // No-op: solo verifica si existe (no hay más columnas que actualizar)
-  update: async (id_tutor, _data = {}) => {
+  // Placeholder de update
+  update: async (id_tutor, data = {}) => {
     const [result] = await db.query(
       "UPDATE tutor SET id_tutor = id_tutor WHERE id_tutor = ?",
       [id_tutor]
@@ -41,141 +39,94 @@ export default {
     return result;
   },
 
-  /**
-   * Obtiene la info de dashboard para un FUNCIONARIO que es tutor:
-   * - id_tutor asociado (via registro_tutor)
-   * - aulas activas asignadas (via aula_tutor)
-   * - IED, sede, grado, programa, #estudiantes
-   * - horarios por aula
-   */
-  getDashboardDataByFuncionario: async (doc_funcionario) => {
-    // 1) Buscar el id_tutor más reciente para ese funcionario
-    const [rowsTutor] = await db.query(
-      `
-      SELECT t.id_tutor
+  // 🔹 NUEVO: todos los tutores con detalle (funcionario, usuario, aulas, estudiantes)
+  getAllWithDetails: async () => {
+    const [rows] = await db.query(`
+      SELECT 
+        t.id_tutor,
+        rt.doc_funcionario,
+        f.tipo_doc,
+        f.nombre1,
+        f.nombre2,
+        f.apellido1,
+        f.apellido2,
+        f.sexo,
+        f.correo,
+        f.telefono,
+        f.fecha_contrato,
+        u.usuario AS username,
+        u.rol,
+        COUNT(DISTINCT at.id_aula) AS aulas_count,
+        COUNT(DISTINCT m.doc_estudiante) AS estudiantes_count
       FROM tutor t
       JOIN registro_tutor rt ON rt.id_tutor = t.id_tutor
+      JOIN funcionario f ON f.doc_funcionario = rt.doc_funcionario
+      LEFT JOIN usuario u ON u.doc_funcionario = f.doc_funcionario
+      LEFT JOIN aula_tutor at 
+        ON at.id_tutor = t.id_tutor 
+       AND (at.fecha_fin IS NULL OR at.fecha_fin > CURRENT_DATE())
+      LEFT JOIN matricula m 
+        ON m.id_aula = at.id_aula 
+       AND (m.fecha_fin IS NULL OR m.fecha_fin > CURRENT_DATE())
+      GROUP BY
+        t.id_tutor,
+        rt.doc_funcionario,
+        f.tipo_doc,
+        f.nombre1,
+        f.nombre2,
+        f.apellido1,
+        f.apellido2,
+        f.sexo,
+        f.correo,
+        f.telefono,
+        f.fecha_contrato,
+        u.usuario,
+        u.rol
+      ORDER BY f.apellido1, f.nombre1;
+    `);
+    return rows;
+  },
+
+  // 🔹 NUEVO: aulas + estudiantes para un tutor (a partir de doc_funcionario)
+  getAulasYEstudiantesByDocFuncionario: async (doc_funcionario) => {
+    const [rows] = await db.query(
+      `
+      SELECT
+        a.id_aula,
+        a.grado,
+        s.id_sede,
+        s.direccion AS direccion_sede,
+        s.tipo AS tipo_sede,
+        i.id_ied,
+        i.nombre AS nombre_ied,
+        e.doc_estudiante,
+        e.tipo_doc AS est_tipo_doc,
+        e.nombre1 AS est_nombre1,
+        e.nombre2 AS est_nombre2,
+        e.apellido1 AS est_apellido1,
+        e.apellido2 AS est_apellido2,
+        e.sexo AS est_sexo,
+        e.correo_acudiente,
+        e.telefono_acudiente
+      FROM registro_tutor rt
+      JOIN tutor t ON t.id_tutor = rt.id_tutor
+      JOIN aula_tutor at 
+        ON at.id_tutor = t.id_tutor
+       AND (at.fecha_fin IS NULL OR at.fecha_fin > CURRENT_DATE())
+      JOIN aula a ON a.id_aula = at.id_aula
+      LEFT JOIN sede s ON s.id_sede = a.id_sede
+      LEFT JOIN ied i ON i.id_ied = s.id_ied
+      LEFT JOIN matricula m 
+        ON m.id_aula = a.id_aula
+       AND (m.fecha_fin IS NULL OR m.fecha_fin > CURRENT_DATE())
+      LEFT JOIN estudiante e ON e.doc_estudiante = m.doc_estudiante
       WHERE rt.doc_funcionario = ?
-      ORDER BY rt.fecha_asignacion DESC
-      LIMIT 1
+      ORDER BY a.id_aula, est_apellido1, est_nombre1;
       `,
       [doc_funcionario]
     );
-
-    if (rowsTutor.length === 0) {
-      // No es tutor (o aún no se registró)
-      return {
-        doc_funcionario,
-        id_tutor: null,
-        aulas: [],
-      };
-    }
-
-    const id_tutor = rowsTutor[0].id_tutor;
-
-    // 2) Aulas activas de ese tutor + IED + sede + programa + #estudiantes
-    const [rowsAulas] = await db.query(
-      `
-      SELECT
-        a.id_aula,
-        a.grado,
-        p.id_programa,
-        p.nombre_programa,
-        s.id_sede,
-        s.direccion AS sede_direccion,
-        s.tipo AS sede_tipo,
-        i.id_ied,
-        i.nombre AS ied_nombre,
-        COUNT(DISTINCT m.doc_estudiante) AS students_count
-      FROM aula_tutor at
-      JOIN aula a           ON a.id_aula = at.id_aula
-      JOIN sede s           ON s.id_sede = a.id_sede
-      JOIN ied i            ON i.id_ied = s.id_ied
-      JOIN programa p       ON p.id_programa = a.id_programa
-      JOIN registro_tutor rt ON rt.id_tutor = at.id_tutor
-      LEFT JOIN matricula m 
-        ON m.id_aula = a.id_aula
-       AND m.fecha_fin IS NULL
-      WHERE at.id_tutor = ?
-        AND at.fecha_fin IS NULL
-      GROUP BY
-        a.id_aula,
-        a.grado,
-        p.id_programa,
-        p.nombre_programa,
-        s.id_sede,
-        s.direccion,
-        s.tipo,
-        i.id_ied,
-        i.nombre
-      `,
-      [id_tutor]
-    );
-
-    if (rowsAulas.length === 0) {
-      return {
-        doc_funcionario,
-        id_tutor,
-        aulas: [],
-      };
-    }
-
-    const aulaIds = rowsAulas.map((r) => r.id_aula);
-
-    // 3) Horarios de esas aulas (asignaciones activas)
-    const placeholders = aulaIds.map(() => "?").join(",");
-    const [rowsHorarios] = await db.query(
-      `
-      SELECT
-        aah.id_aula,
-        h.id_horario,
-        h.dia_semana,
-        h.hora_inicio,
-        h.horas_duracion
-      FROM asignacion_aula_horario aah
-      JOIN horario h ON h.id_horario = aah.id_horario
-      WHERE aah.id_aula IN (${placeholders})
-        AND aah.fecha_fin IS NULL
-      `,
-      aulaIds
-    );
-
-    // 4) Agrupar horarios por aula
-    const horariosPorAula = new Map();
-    for (const h of rowsHorarios) {
-      if (!horariosPorAula.has(h.id_aula)) {
-        horariosPorAula.set(h.id_aula, []);
-      }
-      horariosPorAula.get(h.id_aula).push({
-        id_horario: h.id_horario,
-        dia_semana: h.dia_semana,
-        hora_inicio: h.hora_inicio,
-        horas_duracion: h.horas_duracion,
-      });
-    }
-
-    // 5) Armar estructura final
-    const aulas = rowsAulas.map((r) => ({
-      id_aula: r.id_aula,
-      grado: r.grado,
-      programa: r.nombre_programa, // INSIDECLASSROOM / OUTSIDECLASSROOM (o como lo llames)
-      students_count: r.students_count,
-      sede: {
-        id_sede: r.id_sede,
-        direccion: r.sede_direccion,
-        tipo: r.sede_tipo,
-      },
-      ied: {
-        id_ied: r.id_ied,
-        nombre: r.ied_nombre,
-      },
-      horarios: horariosPorAula.get(r.id_aula) || [],
-    }));
-
-    return {
-      doc_funcionario,
-      id_tutor,
-      aulas,
-    };
+    return rows;
   },
 };
+
+export default TutorModel;

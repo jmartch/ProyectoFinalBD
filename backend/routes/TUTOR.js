@@ -1,14 +1,12 @@
-// routes/TUTOR.routes.js
+// backend/routes/TUTOR.js
 import { Router } from "express";
 import * as tutorController from "../controllers/TUTOR.controller.js";
 
 const router = Router();
 
-// Dashboard de un funcionario (que actúa como tutor)
-router.get(
-  "/dashboard/:doc_funcionario",
-  tutorController.getTutorDashboardData
-);
+// Rutas "especiales" primero
+router.get("/full", tutorController.getAllTutoresFull);
+router.get("/:doc_funcionario/aulas-estudiantes", tutorController.getTutorAulasYEstudiantes);
 
 // CRUD básico
 router.get("/", tutorController.getAllTutores);

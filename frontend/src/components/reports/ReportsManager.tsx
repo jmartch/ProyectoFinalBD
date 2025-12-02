@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { AuthUser } from '../../lib/auth';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
@@ -9,9 +9,18 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
 import { Badge } from '../ui/badge';
 import { 
-  aulas, institutions, students, studentAulaAssignments, schedules,
-  tutorAssignments, persons, programWeeks, gradePeriods, gradeComponents
+  aulas,
+  institutions,
+  students,
+  studentAulaAssignments,
+  schedules,
+  tutorAssignments,
+  persons,
+  programWeeks,
+  // keep gradePeriods and gradeComponents mocks for grades view
+  gradePeriods, gradeComponents
 } from '../../lib/mockData';
+import { fetchAulas, fetchRegistroClasesAll, fetchAsistenciasAll, fetchEstudiantesDetalle, fetchTutores, fetchAulaTutores, fetchHorarios, fetchAsignacionesAulaHorario } from '../../lib/reportService';
 import { FileText, Calendar, Users, BarChart } from 'lucide-react';
 import { DayOfWeek } from '../../types';
 
@@ -61,39 +70,91 @@ export function ReportsManager({ authUser }: ReportsManagerProps) {
   const [selectedWeek, setSelectedWeek] = useState<string>('');
   const [startDate, setStartDate] = useState<string>('');
   const [endDate, setEndDate] = useState<string>('');
+  const [aulasList, setAulasList] = useState<any[]>([]);
+  const [estudiantesDetalle, setEstudiantesDetalle] = useState<any[]>([]);
+  const [registros, setRegistros] = useState<any[]>([]);
+  const [asistencias, setAsistencias] = useState<any[]>([]);
+  const [tutoresList, setTutoresList] = useState<any[]>([]);
+  const [aulaTutores, setAulaTutores] = useState<any[]>([]);
+  const [horariosList, setHorariosList] = useState<any[]>([]);
+  const [asignacionesHorario, setAsignacionesHorario] = useState<any[]>([]);
 
-  // Mock attendance data for demonstration
-  const generateMockAttendance = () => {
+  // Generate classroom attendance rows from backend registros + asistencias
+  const generateAttendanceFromBackend = () => {
     if (!selectedAula) return [];
-    
-    const mockData: AttendanceRow[] = [];
-    const weeks = programWeeks.slice(0, 4); // Last 4 weeks
-    const selectedAulaData = aulas.find(a => a.id === selectedAula);
-    const aulaSchedules = schedules.filter(s => s.aulaId === selectedAula && s.isActive);
-    const assignment = tutorAssignments.find(ta => ta.aulaId === selectedAula && ta.isActive);
-    const tutor = assignment ? persons.find(p => p.id === assignment.tutorId) : null;
-
-    weeks.forEach((week) => {
-      aulaSchedules.forEach((schedule) => {
-        const date = new Date(week.startDate);
-        date.setDate(date.getDate() + Object.values(DayOfWeek).indexOf(schedule.dayOfWeek as DayOfWeek));
-        
-        mockData.push({
-          week: week.weekNumber,
-          date: date.toLocaleDateString('es-CO'),
-          dayOfWeek: schedule.dayOfWeek,
-          tutor: tutor ? `${tutor.firstName} ${tutor.lastName}` : 'Sin asignar',
-          schedule: `${schedule.startTime} - ${schedule.endTime}`,
-          wasHeld: Math.random() > 0.1, // 90% classes held
-          hoursPlanned: schedule.hoursEquivalent,
-          hoursTaught: Math.random() > 0.1 ? schedule.hoursEquivalent : 0,
-          absenceReason: Math.random() > 0.9 ? 'Festivo' : null,
-          makeupDate: null,
+    // Filter registros by aula and date range if provided
+    const filtered = registros.filter(r => String(r.id_aula) === String(selectedAula));
+    const rows: AttendanceRow[] = filtered.map((r: any) => {
+      const fecha = new Date(r.fecha).toLocaleDateString('es-CO');
+      const dayOfWeek = new Date(r.fecha).toLocaleDateString('es-CO', { weekday: 'long' });
+      // Find tutor assignment for the aula that covers the date
+      let tutorName = '-';
+      try {
+        const fechaISO = new Date(r.fecha);
+        const assignment = aulaTutores.find((at: any) => {
+          if (!at.id_aula) return false;
+          if (String(at.id_aula) !== String(r.id_aula)) return false;
+          const start = at.fecha_asignacion ? new Date(at.fecha_asignacion) : null;
+          const end = at.fecha_fin ? new Date(at.fecha_fin) : null;
+          if (start && fechaISO < start) return false;
+          if (end && fechaISO > end) return false;
+          return true;
         });
-      });
-    });
 
-    return mockData;
+        if (assignment) {
+          // Use id_tutor to find the tutor in tutoresList which now has nombre1, apellido1
+          const tutor = tutoresList.find(t => String(t.id_tutor) === String(assignment.id_tutor));
+          if (tutor) {
+            tutorName = `${tutor.nombre1 || ''} ${tutor.apellido1 || ''}`.trim();
+          }
+        }
+      } catch (e) {
+        tutorName = '-';
+      }
+
+      // Find horario via asignacion_aula_horario for the aula and date
+      let schedule = '-';
+      try {
+        const fechaISO = new Date(r.fecha);
+        const asign = asignacionesHorario.find((ah: any) => {
+          if (!ah.id_aula) return false;
+          if (String(ah.id_aula) !== String(r.id_aula)) return false;
+          const start = ah.fecha_inicio ? new Date(ah.fecha_inicio) : null;
+          const end = ah.fecha_fin ? new Date(ah.fecha_fin) : null;
+          if (start && fechaISO < start) return false;
+          if (end && fechaISO > end) return false;
+          return true;
+        });
+
+        if (asign) {
+          const horario = horariosList.find(h => String(h.id_horario ?? h.id) === String(asign.id_horario));
+          if (horario) {
+            // format schedule: Dia HH:MM
+            schedule = `${horario.dia_semana || horario.diaSemana || ''} ${horario.hora_inicio || horario.hora_inicio || ''}`.trim();
+          }
+        }
+      } catch (e) {
+        schedule = '-';
+      }
+      const wasHeld = r.dictada === 1 || r.dictada === true;
+      const horasPlanned = '-';
+      const horasTaught = '-';
+      const motivo = r.codigo_motivo || '-';
+      const reposicion = r.fecha_reposicion || '-';
+      return {
+        week: r.numero_semana,
+        date: fecha,
+        dayOfWeek,
+        tutor: tutorName,
+        schedule,
+        wasHeld,
+        hoursPlanned: horasPlanned as any,
+        hoursTaught: horasTaught as any,
+        absenceReason: motivo,
+        makeupDate: reposicion,
+      };
+    });
+    return rows;
   };
 
   const generateMockStudentAttendance = () => {
@@ -154,9 +215,65 @@ export function ReportsManager({ authUser }: ReportsManagerProps) {
     return mockData;
   };
 
-  const classroomAttendanceData = selectedAula ? generateMockAttendance() : [];
+  const classroomAttendanceData = selectedAula ? generateAttendanceFromBackend() : [];
   const studentAttendanceData = selectedStudent ? generateMockStudentAttendance() : [];
   const studentGradesData = selectedStudent ? generateMockGrades() : [];
+
+  // Load initial lists
+  const loadLists = async () => {
+    try {
+      const [aulasRes, estudiantesRes, registrosRes, asistenciasRes] = await Promise.all([
+        fetchAulas(),
+        fetchEstudiantesDetalle(),
+        fetchRegistroClasesAll(),
+        fetchAsistenciasAll()
+      ]);
+      setAulasList(aulasRes);
+      setEstudiantesDetalle(estudiantesRes);
+      setRegistros(registrosRes);
+      setAsistencias(asistenciasRes);
+    } catch (err) {
+      console.error('Error loading report lists', err);
+    }
+  };
+
+  // Extended load to fetch tutors, aula-tutor, horarios and asignaciones
+  const loadExtendedLists = async () => {
+    try {
+      const [tutoresRes, aulaTutoresRes, horariosRes, asignacionesRes] = await Promise.all([
+        fetchTutores(),
+        fetchAulaTutores(),
+        fetchHorarios(),
+        fetchAsignacionesAulaHorario()
+      ]);
+      setTutoresList(tutoresRes);
+      setAulaTutores(aulaTutoresRes);
+      setHorariosList(horariosRes);
+      setAsignacionesHorario(asignacionesRes);
+    } catch (err) {
+      console.error('Error loading extended report lists', err);
+    }
+  };
+
+  // Run once on mount
+  useEffect(() => { loadLists(); loadExtendedLists(); }, []);
+
+  // Debug: log loaded lists to help diagnose missing tutor/name mappings
+  useEffect(() => {
+    console.debug('ReportsManager loaded lists:', {
+      aulas: aulasList.length,
+      registros: registros.length,
+      asistencias: asistencias.length,
+      tutores: tutoresList.length,
+      aulaTutores: aulaTutores.length,
+      horarios: horariosList.length,
+      asignacionesHorario: asignacionesHorario.length,
+    });
+
+    if (aulaTutores.length > 0) console.debug('AulaTutor sample:', aulaTutores[0]);
+    if (tutoresList.length > 0) console.debug('Tutor sample:', tutoresList[0]);
+    if (asignacionesHorario.length > 0) console.debug('Asignacion aula-horario sample:', asignacionesHorario[0]);
+  }, [aulasList, registros, asistencias, tutoresList, aulaTutores, horariosList, asignacionesHorario]);
 
   return (
     <div className="space-y-6">
@@ -199,16 +316,16 @@ export function ReportsManager({ authUser }: ReportsManagerProps) {
                     <SelectTrigger id="aula-select">
                       <SelectValue placeholder="Seleccione aula" />
                     </SelectTrigger>
-                    <SelectContent>
-                      {aulas.map(aula => {
-                        const institution = institutions.find(i => i.id === aula.institutionId);
-                        return (
-                          <SelectItem key={aula.id} value={aula.id}>
-                            {aula.code} - {institution?.name}
-                          </SelectItem>
-                        );
-                      })}
-                    </SelectContent>
+                      <SelectContent>
+                        {aulasList.map((aula: any) => {
+                          const institution = institutions.find(i => i.id === (aula.id_sede || aula.institutionId));
+                          return (
+                            <SelectItem key={aula.id_aula ?? aula.id} value={String(aula.id_aula ?? aula.id)}>
+                              {(aula.codigo || aula.code || `Aula ${aula.id_aula || aula.id}`)} {institution ? `- ${institution.name}` : ''}
+                            </SelectItem>
+                          );
+                        })}
+                      </SelectContent>
                   </Select>
                 </div>
 

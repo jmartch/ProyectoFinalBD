@@ -24,21 +24,28 @@ import registroTutoresRoutes from './routes/REGISTRO_TUTOR.js';
 import componenteRoutes from './routes/COMPONENTE.js';
 import funcionarioRoutes from './routes/FUNCIONARIO.js';
 import detalleNotaRoutes from './routes/DETALLE_NOTA.js';
-import aulaTutorRoutes from "./routes/AULA_TUTOR.js";
-import programaRoutes from "./routes/PROGRAMA.js";
-import semanaRoutes from "./routes/SEMANA.js";
+import aulaTutorRoutes from './routes/AULA_TUTOR.js';
+import programaRoutes from './routes/PROGRAMA.js';
+import semanaRoutes from './routes/SEMANA.js';
 import calendarRoutes from './routes/CALENDAR.js';
 import festivoRoutes from './routes/FESTIVOS.js';
 
 dotenv.config();
+
 const app = express();
 
+// =========================
 // Middleware
+// =========================
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Rutas de la API (ajusta las rutas base si lo deseas)
+// =========================
+/* Rutas de la API */
+// =========================
+
+// Core académico
 app.use('/api/estudiantes', estudianteRoutes);
 app.use('/api/ieds', iedRoutes);
 app.use('/api/notas', notaRoutes);
@@ -48,34 +55,53 @@ app.use('/api/aulas', aulaRoutes);
 app.use('/api/tutores', tutorRoutes);
 app.use('/api/sedes', sedeRoutes);
 app.use('/api/periodos', periodoRoutes);
-app.use('/api/usuarios', usuarioRoutes);
 app.use('/api/motivos', motivoRoutes);
 app.use('/api/matriculas', matriculaRoutes);
 app.use('/api/registro_clases', registroClasesRoutes);
-app.use('/api/registro_tutores', registroTutoresRoutes);
 app.use('/api/componentes', componenteRoutes);
-app.use('/api/funcionarios', funcionarioRoutes);
 app.use('/api/detalle_nota', detalleNotaRoutes);
-app.use("/api/aula-tutor", aulaTutorRoutes);
-app.use("/api/programas", programaRoutes);
-app.use("/api/semanas", semanaRoutes);
+
+// Funcionarios / usuarios
+app.use('/api/funcionarios', funcionarioRoutes);
+app.use('/api/usuarios', usuarioRoutes);
+
+// 🔹 Registro de tutor (OJO: con guion, no guion bajo)
+app.use('/api/registro-tutor', registroTutoresRoutes);
+
+// Asignación aula–tutor
+app.use('/api/aula-tutor', aulaTutorRoutes);
+
+// Otros módulos
+app.use('/api/programas', programaRoutes);
+app.use('/api/semanas', semanaRoutes);
 app.use('/api/calendar', calendarRoutes);
 app.use("/api/auth", authRoutes);
 app.use('/api/festivos', festivoRoutes);
 
 
-
+// =========================
 // Health check
+// =========================
 app.get('/', (req, res) => {
-  res.json({ status: 'ok', environment: process.env.NODE_ENV || 'development' });
+  res.json({
+    status: 'ok',
+    environment: process.env.NODE_ENV || 'development',
+  });
 });
 
-// Error handler
+// =========================
+// Error handler genérico
+// =========================
 app.use((err, req, res, next) => {
   console.error(err);
-  res.status(err.status || 500).json({ error: err.message || 'Internal server error' });
+  res
+    .status(err.status || 500)
+    .json({ error: err.message || 'Internal server error' });
 });
 
+// =========================
+// Inicio del servidor
+// =========================
 async function start() {
   await initializeDatabase();
   await seedInitialUsers(); 
@@ -87,7 +113,7 @@ async function start() {
   app.listen(PORT, () => {
     console.log(`🚀 Servidor Global Kids corriendo en puerto ${PORT}`);
     console.log(`Documentación: http://localhost:${PORT}/api-docs`);
-    console.log(`Endpoints base montados en /api/*`);
+    console.log('Endpoints base montados en /api/*');
   });
 }
 
