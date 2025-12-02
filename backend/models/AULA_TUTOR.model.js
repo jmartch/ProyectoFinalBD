@@ -1,28 +1,12 @@
-// backend/models/AULA_TUTOR.model.js
-import db from "../config/db.js";
+import { Router } from "express";
+import {
+  getAllAulaTutor,
+  createAulaTutor,
+} from "../controllers/AULA_TUTOR.controller.js";
 
-const AulaTutorModel = {
-  getAll: async () => {
-    const [rows] = await db.query("SELECT * FROM aula_tutor");
-    return rows;
-  },
+const router = Router();
 
-  create: async ({ id_aula, id_tutor, fecha_asignacion, fecha_fin = null }) => {
-    await db.query(
-      `
-      INSERT INTO aula_tutor (id_aula, id_tutor, fecha_asignacion, fecha_fin)
-      VALUES (?, ?, ?, ?)
-      `,
-      [id_aula, id_tutor, fecha_asignacion, fecha_fin]
-    );
+router.get("/", getAllAulaTutor);
+router.post("/", createAulaTutor);
 
-    return {
-      id_aula,
-      id_tutor,
-      fecha_asignacion,
-      fecha_fin,
-    };
-  },
-};
-
-export default AulaTutorModel;
+export default router;

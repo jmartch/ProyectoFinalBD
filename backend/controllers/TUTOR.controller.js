@@ -1,189 +1,84 @@
-// backend/controllers/TUTOR.controller.js
-import Tutor from "../models/TUTOR.model.js";
+import db from "../config/db.js";
 
-// ========== CRUD básico ==========
-
-export const getAllTutores = async (req, res) => {
+// ======================
+// GET TODOS LOS TUTORES
+// ======================
+export async function getAllTutores(req, res) {
   try {
-    const tutores = await Tutor.getAll();
-    res.json(tutores);
-  } catch (error) {
-    res.status(500).json({ 
-      message: "Error al obtener los tutores", 
-      error: error.message 
-    });
+    const [rows] = await db.query("SELECT id_tutor FROM tutor");
+    res.json(rows);
+  } catch (err) {
+    res.status(500).json({ message: "Error obteniendo tutores" });
   }
-};
+}
 
-export const getTutorById = async (req, res) => {
+// ======================
+// CREAR TUTOR (solo id)
+// ======================
+export async function createTutor(req, res) {
   try {
-    const { id } = req.params;
-    const tutor = await Tutor.getById(id);
-    
-    if (!tutor) {
-      return res.status(404).json({ 
-        message: "Tutor no encontrado" 
-      });
-    }
-    
-    res.json(tutor);
-  } catch (error) {
-    res.status(500).json({ 
-      message: "Error al obtener el tutor", 
-      error: error.message 
-    });
+    const [result] = await db.query("INSERT INTO tutor () VALUES ()");
+    res.json({ id_tutor: result.insertId });
+  } catch (err) {
+    res.status(500).json({ message: "Error creando tutor" });
   }
-};
+}
 
-export const createTutor = async (req, res) => {
+// ================================
+// AULAS + ESTUDIANTES POR TUTOR
+// ================================
+export async function getTutorAulasYEstudiantes(req, res) {
+  const { id_tutor } = req.params;
+
   try {
-    // No necesitamos nada en el body: se crea un tutor vacío y la BD genera el id
-    const result = await Tutor.create();
-    
-    res.status(201).json({ 
-      message: "Tutor creado exitosamente",
-      data: { 
-        id_tutor: result.insertId
-      }
-    });
-  } catch (error) {
-    if (error.code === "ER_DUP_ENTRY") {
-      return res.status(409).json({ 
-        message: "Ya existe un tutor con ese id" 
-      });
-    }
-    res.status(500).json({ 
-      message: "Error al crear el tutor", 
-      error: error.message 
-    });
-  }
-};
+    const [rows] = await db.query(
+      `
+      SELECT 
+        a.id_aula,
+        a.grado,
+        e.doc_estudiante,
+        e.tipo_doc,
+        e.nombre1,
+        e.nombre2,
+        e.apellido1,
+        e.apellido2,
+        e.sexo
+      FROM aula_tutor at
+      JOIN aula a ON a.id_aula = at.id_aula
+      LEFT JOIN matricula m ON m.id_aula = a.id_aula AND (m.fecha_fin IS NULL)
+      LEFT JOIN estudiante e ON e.doc_estudiante = m.doc_estudiante
+      WHERE at.id_tutor = ?
+      ORDER BY a.id_aula
+    `,
+      [id_tutor]
+    );
 
-export const updateTutor = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const data = req.body;
-    
-    if (data.id_tutor) {
-      return res.status(400).json({ 
-        message: "No se puede actualizar el id del tutor" 
-      });
-    }
+    const map = new Map();
 
-    if (Object.keys(data).length === 0) {
-      return res.status(400).json({ 
-        message: "No se proporcionaron datos para actualizar" 
-      });
-    }
-    
-    const result = await Tutor.update(id, data);
-    
-    if (result.affectedRows === 0) {
-      return res.status(404).json({ 
-        message: "Tutor no encontrado" 
-      });
-    }
-    
-    res.json({ 
-      message: "Tutor actualizado exitosamente",
-      data: { id_tutor: id, ...data }
-    });
-  } catch (error) {
-    res.status(500).json({ 
-      message: "Error al actualizar el tutor", 
-      error: error.message 
-    });
-  }
-};
-
-export const deleteTutor = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const result = await Tutor.remove(id);
-    
-    if (result.affectedRows === 0) {
-      return res.status(404).json({ 
-        message: "Tutor no encontrado" 
-      });
-    }
-    
-    res.json({ 
-      message: "Tutor eliminado exitosamente" 
-    });
-  } catch (error) {
-    if (error.code === "ER_ROW_IS_REFERENCED_2") {
-      return res.status(409).json({ 
-        message: "No se puede eliminar el tutor porque tiene registros asociados" 
-      });
-    }
-    res.status(500).json({ 
-      message: "Error al eliminar el tutor", 
-      error: error.message 
-    });
-  }
-};
-
-// ========== NUEVO: /api/tutores/full ==========
-
-export const getAllTutoresFull = async (req, res) => {
-  try {
-    const tutores = await Tutor.getAllWithDetails();
-    res.json(tutores);
-  } catch (error) {
-    res.status(500).json({
-      message: "Error al obtener los tutores con detalle",
-      error: error.message,
-    });
-  }
-};
-
-// ========== NUEVO: /api/tutores/:doc_funcionario/aulas-estudiantes ==========
-
-export const getTutorAulasYEstudiantes = async (req, res) => {
-  try {
-    const { doc_funcionario } = req.params;
-    const rows = await Tutor.getAulasYEstudiantesByDocFuncionario(doc_funcionario);
-
-    const aulasMap = new Map();
-
-    rows.forEach((row) => {
-      const id_aula = row.id_aula;
-      if (!aulasMap.has(id_aula)) {
-        aulasMap.set(id_aula, {
-          id_aula: row.id_aula,
-          grado: row.grado,
-          id_sede: row.id_sede,
-          direccion_sede: row.direccion_sede,
-          tipo_sede: row.tipo_sede,
-          id_ied: row.id_ied,
-          nombre_ied: row.nombre_ied,
+    rows.forEach((r) => {
+      if (!map.has(r.id_aula)) {
+        map.set(r.id_aula, {
+          id_aula: r.id_aula,
+          grado: r.grado,
           estudiantes: [],
         });
       }
-
-      if (row.doc_estudiante) {
-        aulasMap.get(id_aula).estudiantes.push({
-          doc_estudiante: row.doc_estudiante,
-          tipo_doc: row.est_tipo_doc,
-          nombre1: row.est_nombre1,
-          nombre2: row.est_nombre2,
-          apellido1: row.est_apellido1,
-          apellido2: row.est_apellido2,
-          sexo: row.est_sexo,
-          correo_acudiente: row.correo_acudiente,
-          telefono_acudiente: row.telefono_acudiente,
+      if (r.doc_estudiante) {
+        map.get(r.id_aula).estudiantes.push({
+          doc_estudiante: r.doc_estudiante,
+          tipo_doc: r.tipo_doc,
+          nombre1: r.nombre1,
+          nombre2: r.nombre2,
+          apellido1: r.apellido1,
+          apellido2: r.apellido2,
+          sexo: r.sexo,
         });
       }
     });
 
-    res.json({
-      doc_funcionario,
-      aulas: Array.from(aulasMap.values()),
-    });
-  } catch (error) {
-    res.status(500).json({
-      message: "Error al obtener las aulas y estudiantes del tutor",
-      error: error.message,
-    });
+    res.json([...map.values()]);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Error consultando aulas del tutor" });
   }
-};
+}

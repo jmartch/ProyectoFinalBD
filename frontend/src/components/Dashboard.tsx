@@ -25,7 +25,7 @@ import {
 import { InstitutionsManager } from "./admin/InstitutionsManager";
 import { AulasManager } from "./admin/AulasManager";
 import { StudentsManager } from "./admin/StudentsManager";
-import { TutorsManager } from "./admin/TutorsManager";
+import  TutorsManager  from "./admin/TutorsManager";
 import { AttendanceManager } from "./tutor/AttendanceManager";
 import { GradesManager } from "./tutor/GradesManager";
 import { ReportsManager } from "./reports/ReportsManager";

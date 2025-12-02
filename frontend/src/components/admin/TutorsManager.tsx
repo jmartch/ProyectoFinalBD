@@ -1,5 +1,3 @@
-// src/components/admin/TutorsManager.tsx
-
 import { useEffect, useState } from "react";
 import {
   Card,
@@ -43,16 +41,142 @@ import {
   TabsTrigger,
 } from "../ui/tabs";
 
-import {
-  fetchTutoresFull,
-  fetchTutorAulasYEstudiantes,
-  fetchAulas,
-  assignAulaToTutor,
-  createFuncionarioFromForm,
-  type TutorFull,
-  type TutorAulaEstudiantes,
-  type Aula,
-} from "../../lib/api";
+// ================== TIPOS LOCALES (MOCK) ==================
+
+export interface TutorFull {
+  doc_funcionario: number;
+  tipo_doc: string;
+  nombre1: string;
+  nombre2?: string | null;
+  apellido1: string;
+  apellido2?: string | null;
+  sexo: "M" | "F" | string;
+  correo: string;
+  telefono: string;
+  fecha_contrato: string;
+  id_tutor?: number | null;
+  username?: string | null;
+}
+
+export interface Aula {
+  id_aula: number;
+  grado: number;
+  nombre_ied?: string;
+  direccion_sede?: string;
+}
+
+export interface TutorAulaEstudiantes {
+  id_aula: number;
+  grado: number;
+  nombre_ied?: string;
+  direccion_sede?: string;
+  estudiantes: {
+    doc_estudiante: number;
+    tipo_doc: string;
+    nombre1: string;
+    nombre2?: string | null;
+    apellido1: string;
+    apellido2?: string | null;
+    sexo: string;
+    correo_acudiente: string;
+    telefono_acudiente: string;
+  }[];
+}
+
+// ================== MOCK DATA ==================
+
+const MOCK_FUNCIONARIOS: TutorFull[] = [
+  {
+    doc_funcionario: 123456,
+    tipo_doc: "CC",
+    nombre1: "María",
+    nombre2: "Isabel",
+    apellido1: "Gutiérrez",
+    apellido2: "González",
+    sexo: "F",
+    correo: "maria.gutierrez@example.com",
+    telefono: "3001112233",
+    fecha_contrato: "2024-01-15",
+    id_tutor: 123456,
+    username: "maria.tutor",
+  },
+  {
+    doc_funcionario: 789012,
+    tipo_doc: "CC",
+    nombre1: "Carlos",
+    nombre2: "Andrés",
+    apellido1: "Pérez",
+    apellido2: "López",
+    sexo: "M",
+    correo: "carlos.perez@example.com",
+    telefono: "3004445566",
+    fecha_contrato: "2024-02-10",
+    id_tutor: null,
+    username: null,
+  },
+  {
+    doc_funcionario: 345678,
+    tipo_doc: "CC",
+    nombre1: "Lucía",
+    nombre2: "Isabel",
+    apellido1: "Montoya",
+    apellido2: "",
+    sexo: "F",
+    correo: "lucia.montoya@example.com",
+    telefono: "3007778899",
+    fecha_contrato: "2024-03-01",
+    id_tutor: 345678,
+    username: null,
+  },
+];
+
+const MOCK_AULAS: Aula[] = [
+  { id_aula: 1, grado: 3, nombre_ied: "IED San Martín", direccion_sede: "Cra 1 #10-20" },
+  { id_aula: 2, grado: 4, nombre_ied: "IED El Prado", direccion_sede: "Calle 50 #43-21" },
+  { id_aula: 3, grado: 5, nombre_ied: "IED Miramar", direccion_sede: "Av. Circunvalar" },
+];
+
+// asignaciones iniciales: id_tutor → ids de aula
+const MOCK_AULAS_POR_TUTOR: Record<number, number[]> = {
+  123456: [1, 2],
+  345678: [3],
+};
+
+const MOCK_ESTUDIANTES_BASE = [
+  {
+    doc_estudiante: 1001,
+    tipo_doc: "TI",
+    nombre1: "Juan",
+    nombre2: "David",
+    apellido1: "Ramírez",
+    apellido2: "Suarez",
+    sexo: "M",
+    correo_acudiente: "acudiente.juan@example.com",
+    telefono_acudiente: "3011234567",
+  },
+  {
+    doc_estudiante: 1002,
+    tipo_doc: "TI",
+    nombre1: "Ana",
+    nombre2: "María",
+    apellido1: "López",
+    apellido2: "Crespo",
+    sexo: "F",
+    correo_acudiente: "acudiente.ana@example.com",
+    telefono_acudiente: "3029876543",
+  },
+  {
+    doc_estudiante: 1003,
+    tipo_doc: "TI",
+    nombre1: "Pedro",
+    nombre2: "",
+    apellido1: "García",
+    apellido2: "Ríos",
+    sexo: "M",
+    correo_acudiente: "acudiente.pedro@example.com",
+    telefono_acudiente: "3035556677",
+  },
+];
 
 // Pequeño catálogo local de tipos de documento (para el formulario)
 const documentTypes = [
@@ -67,7 +191,7 @@ export function TutorsManager() {
   const [isCredentialsDialogOpen, setIsCredentialsDialogOpen] =
     useState(false);
 
-  // Lista de tutores/personal desde backend
+  // Lista de tutores/personal (mock)
   const [tutores, setTutores] = useState<TutorFull[]>([]);
   const [loadingTutores, setLoadingTutores] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -91,6 +215,7 @@ export function TutorsManager() {
   const [credentialsError, setCredentialsError] = useState<string | null>(
     null,
   );
+  const [savingCredentials, setSavingCredentials] = useState(false);
 
   // ---------- Aulas & Estudiantes ----------
   const [isAulasDialogOpen, setIsAulasDialogOpen] = useState(false);
@@ -110,22 +235,25 @@ export function TutorsManager() {
   const [aulasDisponibles, setAulasDisponibles] = useState<Aula[]>([]);
   const [selectedAulaId, setSelectedAulaId] = useState<string>("");
 
-  // ================== Cargar tutores al montar ==================
+  // Estado de asignaciones (mock) id_tutor → ids de aula
+  const [aulasPorTutor, setAulasPorTutor] = useState<
+    Record<number, number[]>
+  >({});
+
+  // ================== Cargar datos MOCK al montar ==================
   useEffect(() => {
-    const load = async () => {
-      try {
-        setLoadingTutores(true);
-        setError(null);
-        const data = await fetchTutoresFull();
-        setTutores(data);
-      } catch (err: any) {
-        console.error(err);
-        setError(err.message || "Error al obtener tutores");
-      } finally {
-        setLoadingTutores(false);
-      }
-    };
-    void load();
+    setLoadingTutores(true);
+    try {
+      // simulamos fetchTutoresFull
+      setTutores(MOCK_FUNCIONARIOS);
+      setAulasDisponibles(MOCK_AULAS);
+      setAulasPorTutor({ ...MOCK_AULAS_POR_TUTOR });
+    } catch (err: any) {
+      console.error(err);
+      setError("Error al cargar datos locales (mock)");
+    } finally {
+      setLoadingTutores(false);
+    }
   }, []);
 
   // Helper para construir nombre completo
@@ -142,19 +270,18 @@ export function TutorsManager() {
     return partes;
   };
 
-  // Helper para rol inferido según aulas/estudiantes
   // Helper para rol inferido según si tiene registro en la tabla TUTOR
   const getRol = (t: TutorFull) =>
     t.id_tutor ? "Tutor" : "Administrativo";
-
 
   const totalTutores = tutores.filter((t) => getRol(t) === "Tutor").length;
   const totalAdministrativos = tutores.filter(
     (t) => getRol(t) === "Administrativo",
   ).length;
 
+  const soloTutores = tutores.filter((t) => getRol(t) === "Tutor");
 
-  // ================== Contratar nuevo personal ==================
+  // ================== Contratar nuevo personal (SOLO STATE) ==================
   const handleSubmitNuevoPersonal = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
@@ -179,44 +306,47 @@ export function TutorsManager() {
     const [apellido1, ...restApellidos] = lastName.trim().split(" ");
     const apellido2 = restApellidos.join(" ") || null;
 
-    try {
-      await createFuncionarioFromForm({
-        tipo_doc: docType,
-        doc: docNumber,
-        nombre1,
-        nombre2,
-        apellido1,
-        apellido2,
-        correo: email,
-        telefono: phone,
-        sexo: sex as "M" | "F",
-        fecha_contrato: hiredDate,
-        shouldCreateTutor: role === "TUTOR",
-      });
+    const doc = Number(docNumber);
 
-      // Volvemos a cargar la lista de tutores/personal
-      const data = await fetchTutoresFull();
-      setTutores(data);
+    const nuevo: TutorFull = {
+      doc_funcionario: doc,
+      tipo_doc: docType,
+      nombre1,
+      nombre2,
+      apellido1,
+      apellido2,
+      sexo: sex,
+      correo: email,
+      telefono: phone,
+      fecha_contrato: hiredDate,
+      id_tutor: role === "TUTOR" ? doc : null,
+      username: null,
+    };
 
-      // Limpiar formulario
-      setFirstName("");
-      setLastName("");
-      setDocType("");
-      setDocNumber("");
-      setEmail("");
-      setPhone("");
-      setSex("");
-      setRole("TUTOR");
-      setHiredDate("");
+    setTutores((prev) => [...prev, nuevo]);
 
-      setIsAddDialogOpen(false);
-    } catch (err: any) {
-      console.error(err);
-      setError(err.message || "Error al contratar personal");
+    // Inicializamos sus aulas vacías si es tutor
+    if (role === "TUTOR") {
+      setAulasPorTutor((prev) => ({
+        ...prev,
+        [doc]: prev[doc] ?? [],
+      }));
     }
+
+    // Limpiar formulario
+    setFirstName("");
+    setLastName("");
+    setDocType("");
+    setDocNumber("");
+    setEmail("");
+    setPhone("");
+    setSex("");
+    setRole("TUTOR");
+    setHiredDate("");
+    setIsAddDialogOpen(false);
   };
 
-  // ================== Ver aulas & estudiantes ==================
+  // ================== Ver aulas & estudiantes (MOCK) ==================
   const handleOpenAulasDialog = async (tutor: TutorFull) => {
     setSelectedTutorForAulas(tutor);
     setIsAulasDialogOpen(true);
@@ -224,49 +354,42 @@ export function TutorsManager() {
     setLoadingAulas(true);
 
     try {
-      const aulas = await fetchTutorAulasYEstudiantes(
-        tutor.doc_funcionario,
-      );
-      // Opcional: deduplicar estudiantes por doc_estudiante si vienen repetidos
-      const aulasLimpias = aulas.map((aula) => {
-        const map = new Map<
-          number,
-          TutorAulaEstudiantes["estudiantes"][number]
-        >();
-        aula.estudiantes.forEach((est) =>
-          map.set(est.doc_estudiante, est),
-        );
-        return {
-          ...aula,
-          estudiantes: Array.from(map.values()),
-        };
-      });
+      const idTutor = tutor.id_tutor ?? tutor.doc_funcionario;
+      const idsAulas = aulasPorTutor[idTutor] || [];
 
-      setAulasEstudiantes(aulasLimpias);
+      const data: TutorAulaEstudiantes[] = idsAulas.map((id_aula, idx) => {
+        const aula = MOCK_AULAS.find((a) => a.id_aula === id_aula);
+        if (!aula) return null;
+
+        // asignamos 2 estudiantes de ejemplo a cada aula
+        const base1 = MOCK_ESTUDIANTES_BASE[(idx * 2) % MOCK_ESTUDIANTES_BASE.length];
+        const base2 =
+          MOCK_ESTUDIANTES_BASE[(idx * 2 + 1) % MOCK_ESTUDIANTES_BASE.length];
+
+        return {
+          id_aula: aula.id_aula,
+          grado: aula.grado,
+          nombre_ied: aula.nombre_ied,
+          direccion_sede: aula.direccion_sede,
+          estudiantes: [base1, base2],
+        };
+      }).filter((x): x is TutorAulaEstudiantes => x !== null);
+
+      setAulasEstudiantes(data);
     } catch (err: any) {
       console.error(err);
-      setErrorAulas(
-        err.message || "Error al obtener aulas y estudiantes",
-      );
+      setErrorAulas("Error al cargar datos locales (mock) de aulas");
     } finally {
       setLoadingAulas(false);
     }
   };
 
-  // ================== Asignar aula a tutor ==================
+  // ================== Asignar aula a tutor (solo mock/state) ==================
   const handleOpenAssignAulaDialog = async (tutor: TutorFull) => {
     setSelectedTutorForAssign(tutor);
     setIsAssignAulaDialogOpen(true);
     setSelectedAulaId("");
     setError(null);
-
-    try {
-      const aulas = await fetchAulas();
-      setAulasDisponibles(aulas);
-    } catch (err: any) {
-      console.error(err);
-      setError(err.message || "Error al cargar aulas");
-    }
   };
 
   const handleSubmitAssignAula = async (e: React.FormEvent) => {
@@ -276,24 +399,56 @@ export function TutorsManager() {
       return;
     }
 
+    const idTutor = selectedTutorForAssign.id_tutor ?? selectedTutorForAssign.doc_funcionario;
+    const idAula = Number(selectedAulaId);
+
+    setAulasPorTutor((prev) => {
+      const actuales = prev[idTutor] || [];
+      if (actuales.includes(idAula)) {
+        return prev; // ya asignada
+      }
+      return {
+        ...prev,
+        [idTutor]: [...actuales, idAula],
+      };
+    });
+
+    setIsAssignAulaDialogOpen(false);
+    setSelectedTutorForAssign(null);
+    setSelectedAulaId("");
+  };
+
+  // ================== Guardar credenciales (solo mock/state) ==================
+  const handleSubmitCredentials = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setCredentialsError(null);
+
+    if (!selectedTutorForCredentials) return;
+
+    if (!username.trim() || !password.trim()) {
+      setCredentialsError("Usuario y contraseña son obligatorios.");
+      return;
+    }
+
     try {
-      const today = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
-      await assignAulaToTutor({
-        id_tutor: selectedTutorForAssign.id_tutor,
-        id_aula: Number(selectedAulaId),
-        fecha_asignacion: today,
-      });
+      setSavingCredentials(true);
 
-      // Refrescamos conteo de aulas/estudiantes
-      const data = await fetchTutoresFull();
-      setTutores(data);
+      setTutores((prev) =>
+        prev.map((t) =>
+          t.doc_funcionario === selectedTutorForCredentials.doc_funcionario
+            ? { ...t, username: t.username || username.trim() }
+            : t,
+        ),
+      );
 
-      setIsAssignAulaDialogOpen(false);
-      setSelectedTutorForAssign(null);
-      setSelectedAulaId("");
+      setIsCredentialsDialogOpen(false);
+      setUsername("");
+      setPassword("");
     } catch (err: any) {
       console.error(err);
-      setError(err.message || "Error al asignar aula");
+      setCredentialsError("Error al guardar credenciales (mock)");
+    } finally {
+      setSavingCredentials(false);
     }
   };
 
@@ -534,7 +689,9 @@ export function TutorsManager() {
                 </TableHeader>
                 <TableBody>
                   {tutores.map((tutor) => (
-                    <TableRow key={tutor.id_tutor}>
+                    <TableRow
+                      key={String(tutor.doc_funcionario)}
+                    >
                       <TableCell>
                         {getNombreCompleto(tutor)}
                       </TableCell>
@@ -552,8 +709,8 @@ export function TutorsManager() {
                       <TableCell>
                         {tutor.fecha_contrato
                           ? new Date(
-                            tutor.fecha_contrato,
-                          ).toLocaleDateString("es-CO")
+                              tutor.fecha_contrato,
+                            ).toLocaleDateString("es-CO")
                           : "-"}
                       </TableCell>
                       <TableCell>
@@ -664,8 +821,10 @@ export function TutorsManager() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {tutores.map((tutor) => (
-                    <TableRow key={tutor.id_tutor}>
+                  {soloTutores.map((tutor) => (
+                    <TableRow
+                      key={String(tutor.doc_funcionario)}
+                    >
                       <TableCell>
                         {getNombreCompleto(tutor)}
                       </TableCell>
@@ -706,6 +865,9 @@ export function TutorsManager() {
                               setSelectedTutorForCredentials(
                                 tutor,
                               );
+                              setUsername(tutor.username || "");
+                              setPassword("");
+                              setCredentialsError(null);
                               setIsCredentialsDialogOpen(true);
                             }}
                           >
@@ -738,11 +900,7 @@ export function TutorsManager() {
               {selectedTutorForCredentials && (
                 <form
                   className="space-y-4"
-                  onSubmit={(e) => {
-                    e.preventDefault();
-                    // Aquí podrías llamar a tu endpoint de /api/usuarios
-                    setIsCredentialsDialogOpen(false);
-                  }}
+                  onSubmit={handleSubmitCredentials}
                 >
                   {credentialsError && (
                     <p className="text-sm text-red-500">
@@ -773,6 +931,9 @@ export function TutorsManager() {
                         id="username"
                         placeholder="tutor123"
                         required
+                        disabled={
+                          !!selectedTutorForCredentials.username
+                        }
                         value={username}
                         onChange={(e) =>
                           setUsername(e.target.value)
@@ -806,8 +967,10 @@ export function TutorsManager() {
                     >
                       Cancelar
                     </Button>
-                    <Button type="submit">
-                      Guardar Credenciales
+                    <Button type="submit" disabled={savingCredentials}>
+                      {savingCredentials
+                        ? "Guardando..."
+                        : "Guardar Credenciales"}
                     </Button>
                   </div>
                 </form>
@@ -830,8 +993,8 @@ export function TutorsManager() {
             <DialogDescription>
               {selectedTutorForAulas
                 ? `Tutor: ${getNombreCompleto(
-                  selectedTutorForAulas,
-                )}`
+                    selectedTutorForAulas,
+                  )}`
                 : "Seleccione un tutor"}
             </DialogDescription>
           </DialogHeader>
@@ -945,8 +1108,8 @@ export function TutorsManager() {
             <DialogDescription>
               {selectedTutorForAssign
                 ? `Tutor: ${getNombreCompleto(
-                  selectedTutorForAssign,
-                )}`
+                    selectedTutorForAssign,
+                  )}`
                 : "Seleccione un tutor"}
             </DialogDescription>
           </DialogHeader>
@@ -996,3 +1159,5 @@ export function TutorsManager() {
     </div>
   );
 }
+
+export default TutorsManager;

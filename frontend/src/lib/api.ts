@@ -74,12 +74,6 @@ export async function fetchProgramas(): Promise<Programa[]> {
   return res.json();
 }
 
-// 👉 Obtener todas las aulas
-export async function fetchAulas(): Promise<Aula[]> {
-  const res = await fetch(`${API_BASE_URL}/api/aulas`);
-  if (!res.ok) throw new Error("Error al obtener aulas");
-  return res.json();
-}
 
 // 👉 Crear aula nueva
 export async function createAula(data: {
@@ -110,30 +104,11 @@ export interface TutorRow {
 /**
  * Obtener todos los tutores
  */
-export async function fetchTutores(): Promise<TutorRow[]> {
-  const res = await fetch(`${API_BASE_URL}/api/tutores`);
-  if (!res.ok) {
-    throw new Error("Error al obtener tutores");
-  }
-  return res.json();
-}
-
 /**
  * Crear un tutor vacío (solo genera id_tutor AUTO_INCREMENT)
  */
-export async function createTutor(): Promise<TutorRow> {
-  const res = await fetch(`${API_BASE_URL}/api/tutores`, {
-    method: "POST",
-  });
 
-  const body = await res.json().catch(() => ({}));
-  if (!res.ok) {
-    throw new Error(body.message || "Error al crear el tutor");
-  }
 
-  // el backend responde: { message, data: { id_tutor } }
-  return body.data as TutorRow;
-}
 
 /**
  * Eliminar un tutor por id_tutor
@@ -625,85 +600,36 @@ export async function getBoletinCalificaciones(doc_estudiante: number): Promise<
 // ============================================
 // TUTORES - GESTIÓN COMPLETA (ADICIONAL)
 // ============================================
+// src/lib/api.ts
 
 export interface TutorFull {
-  id_tutor: number;
-  doc_funcionario: string;
+  doc_funcionario: number | string;
   tipo_doc: string;
   nombre1: string;
-  nombre2?: string;
+  nombre2: string | null;
   apellido1: string;
-  apellido2?: string;
+  apellido2: string | null;
+  sexo: "M" | "F";
   correo: string;
   telefono: string;
-  fecha_contrato: string;
-  username?: string;
+  fecha_contrato: string | null;
+  id_tutor: number | null;
   aulas_count: number;
   estudiantes_count: number;
+  username: string | null;
+  rol?: string | null;
 }
 
-export interface TutorAulaEstudiantes {
-  id_aula: number;
-  grado: number;
-  nombre_ied?: string;
-  direccion_sede?: string;
-  estudiantes: Array<{
-    doc_estudiante: number;
-    tipo_doc: string;
-    nombre1: string;
-    nombre2?: string;
-    apellido1: string;
-    apellido2?: string;
-    sexo: string;
-    correo_acudiente?: string;
-    telefono_acudiente?: string;
-  }>;
-}
-
-// GET /api/tutores/full - Obtener tutores con conteo de aulas y estudiantes
 export async function fetchTutoresFull(): Promise<TutorFull[]> {
-  const res = await fetch(`${API_BASE_URL}/api/tutores/`);
+  const res = await fetch(`${API_BASE_URL}/api/tutores/full`);
   if (!res.ok) {
-    throw new Error("Error al obtener tutores completos");
+    const body = await res.json().catch(() => ({}));
+    throw new Error(body.message || "Error al obtener tutores completos");
   }
-  const data = await res.json();
-  return Array.isArray(data) ? data : data.data || [];
+  return res.json();
 }
 
-// GET /api/tutores/:doc_funcionario/aulas-estudiantes
-export async function fetchTutorAulasYEstudiantes(
-  doc_funcionario: string
-): Promise<TutorAulaEstudiantes[]> {
-  const res = await fetch(
-    `${API_BASE_URL}/api/tutores/${doc_funcionario}/aulas-estudiantes`
-  );
-  if (!res.ok) {
-    throw new Error("Error al obtener aulas y estudiantes del tutor");
-  }
-  const data = await res.json();
-  return Array.isArray(data) ? data : data.data || [];
-}
-
-// POST /api/aula-tutor - Asignar aula a tutor
-export async function assignAulaToTutor(input: {
-  id_tutor: number;
-  id_aula: number;
-  fecha_asignacion: string; // YYYY-MM-DD
-  fecha_fin?: string; // YYYY-MM-DD (opcional)
-}): Promise<void> {
-  const res = await fetch(`${API_BASE_URL}/api/aula-tutor`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(input),
-  });
-
-  const body = await res.json().catch(() => ({}));
-  if (!res.ok) {
-    throw new Error(body.message || "Error al asignar aula a tutor");
-  }
-}
-
-// POST /api/funcionarios - usado por TutorsManager
+// Ya lo tienes, lo dejo aquí solo para que veas que encaja con el resto
 export async function createFuncionarioFromForm(data: {
   tipo_doc: string;
   doc: string;
@@ -735,9 +661,7 @@ export async function createFuncionarioFromForm(data: {
     `${API_BASE_URL}/api/funcionarios/crear-con-tutor`,
     {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
     },
   );
@@ -747,5 +671,141 @@ export async function createFuncionarioFromForm(data: {
     throw new Error(body.message || "Error al crear funcionario");
   }
 
+  return res.json();
+}
+
+// ==== NUEVO: crear usuario desde el módulo de tutores ====
+
+export async function createUsuarioFromTutor(data: {
+  usuario: string;
+  doc_funcionario: string | number;
+  password: string;
+  rol: string;
+}): Promise<any> {
+  const res = await fetch(`${API_BASE_URL}/api/usuarios`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      usuario: data.usuario,
+      doc_funcionario: data.doc_funcionario,
+      contraseña: data.password, // el backend espera "contraseña"
+      rol: data.rol,
+    }),
+  });
+
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error(body.message || "Error al crear usuario");
+  }
+
+  return res.json();
+}
+
+export async function updateUsuarioFromTutor(data: {
+  usuario: string;
+  password?: string;
+  rol: string;
+}): Promise<any> {
+  const body: any = { rol: data.rol };
+  if (data.password && data.password.trim().length > 0) {
+    body.contraseña = data.password;
+  }
+
+  const res = await fetch(
+    `${API_BASE_URL}/api/usuarios/${encodeURIComponent(data.usuario)}`,
+    {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    },
+  );
+
+  if (!res.ok) {
+    const responseBody = await res.json().catch(() => ({}));
+    throw new Error(
+      responseBody.message || "Error al actualizar usuario",
+    );
+  }
+
+  return res.json();
+}
+// TIPOS
+export interface Aula {
+  id_aula: number;
+  id_sede: number;
+  id_programa: number;
+  grado: number;
+}
+
+export interface TutorAulaEstudiantes {
+  id_aula: number;
+  grado: number;
+  estudiantes: {
+    doc_estudiante: number;
+    tipo_doc: string;
+    nombre1: string;
+    nombre2?: string;
+    apellido1: string;
+    apellido2?: string;
+    sexo: string;
+  }[];
+}
+
+// ===========================
+// TUTORES CRUD BÁSICO
+// ===========================
+export async function fetchTutores(): Promise<{ id_tutor: number }[]> {
+  const res = await fetch(`${API_BASE_URL}/api/tutor`);
+  if (!res.ok) throw new Error("Error al obtener tutores");
+  return res.json();
+}
+
+export async function createTutor(): Promise<{ id_tutor: number }> {
+  const res = await fetch(`${API_BASE_URL}/api/tutor`, {
+    method: "POST",
+  });
+  if (!res.ok) throw new Error("Error al crear tutor");
+  return res.json();
+}
+
+// ===========================
+// AULAS
+// ===========================
+export async function fetchAulas(): Promise<Aula[]> {
+  const res = await fetch(`${API_BASE_URL}/api/aula`);
+  if (!res.ok) throw new Error("Error obteniendo aulas");
+  return res.json();
+}
+
+// ===========================
+// AULAS POR TUTOR
+// ===========================
+export async function fetchTutorAulasYEstudiantes(
+  id_tutor: number
+): Promise<TutorAulaEstudiantes[]> {
+  const res = await fetch(
+    `${API_BASE_URL}/api/tutor/${id_tutor}/aulas-estudiantes`
+  );
+  if (!res.ok) throw new Error("Error obteniendo aulas del tutor");
+  return res.json();
+}
+
+// ===========================
+// ASIGNAR AULA A TUTOR
+// ===========================
+export async function assignAulaToTutor(data: {
+  id_tutor: number;
+  id_aula: number;
+  fecha_asignacion: string;
+}): Promise<any> {
+  const res = await fetch(`${API_BASE_URL}/api/aula-tutor`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(data),
+  });
+
+  if (!res.ok) throw new Error("Error asignando aula a tutor");
   return res.json();
 }

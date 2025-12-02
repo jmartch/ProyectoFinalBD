@@ -1,58 +1,30 @@
-// backend/controllers/AULA_TUTOR.controller.js
-import AulaTutor from "../models/AULA_TUTOR.model.js";
+import db from "../config/db.js";
 
-export const getAllAulaTutor = async (req, res) => {
+// GET /api/aula-tutor
+export async function getAllAulaTutor(req, res) {
   try {
-    const rows = await AulaTutor.getAll();
+    const [rows] = await db.query("SELECT * FROM aula_tutor");
     res.json(rows);
-  } catch (error) {
-    res.status(500).json({
-      message: "Error al obtener las asignaciones aula-tutor",
-      error: error.message,
-    });
+  } catch (err) {
+    res.status(500).json({ message: "Error obteniendo aula_tutor" });
   }
-};
+}
 
-export const createAulaTutor = async (req, res) => {
+// POST /api/aula-tutor
+export async function createAulaTutor(req, res) {
+  const { id_tutor, id_aula, fecha_asignacion } = req.body;
+
   try {
-    const { id_aula, id_tutor, fecha_asignacion, fecha_fin } = req.body;
+    const [result] = await db.query(
+      `
+      INSERT INTO aula_tutor (id_aula, id_tutor, fecha_asignacion)
+      VALUES (?, ?, ?)
+    `,
+      [id_aula, id_tutor, fecha_asignacion]
+    );
 
-    if (!id_aula || !id_tutor || !fecha_asignacion) {
-      return res.status(400).json({
-        message:
-          "Faltan campos requeridos: id_aula, id_tutor, fecha_asignacion",
-      });
-    }
-
-    const data = await AulaTutor.create({
-      id_aula,
-      id_tutor,
-      fecha_asignacion,
-      fecha_fin: fecha_fin || null,
-    });
-
-    res.status(201).json({
-      message: "Aula asignada al tutor correctamente",
-      data,
-    });
-  } catch (error) {
-    if (error.code === "ER_DUP_ENTRY") {
-      return res.status(409).json({
-        message:
-          "Ya existe una asignación de este tutor a esa aula en esa fecha",
-      });
-    }
-
-    if (error.code === "ER_NO_REFERENCED_ROW_2") {
-      return res.status(400).json({
-        message:
-          "No se encontró el aula o el tutor especificado (revisa los IDs)",
-      });
-    }
-
-    res.status(500).json({
-      message: "Error al asignar aula al tutor",
-      error: error.message,
-    });
+    res.json({ id_aula, id_tutor, fecha_asignacion });
+  } catch (err) {
+    res.status(500).json({ message: "Error asignando aula" });
   }
-};
+}

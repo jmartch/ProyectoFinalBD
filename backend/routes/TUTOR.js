@@ -1,18 +1,19 @@
-// backend/routes/TUTOR.js
 import { Router } from "express";
-import * as tutorController from "../controllers/TUTOR.controller.js";
+import {
+  getAllTutores,
+  createTutor,
+  getTutorAulasYEstudiantes,
+} from "../controllers/TUTOR.controller.js";
 
 const router = Router();
 
-// Rutas "especiales" primero
-router.get("/full", tutorController.getAllTutoresFull);
-router.get("/:doc_funcionario/aulas-estudiantes", tutorController.getTutorAulasYEstudiantes);
+// GET /api/tutor
+router.get("/", getAllTutores);
 
-// CRUD básico
-router.get("/", tutorController.getAllTutores);
-router.get("/:id", tutorController.getTutorById);
-router.post("/", tutorController.createTutor);
-router.put("/:id", tutorController.updateTutor);
-router.delete("/:id", tutorController.deleteTutor);
+// POST /api/tutor
+router.post("/", createTutor);
+
+// GET /api/tutor/:id_tutor/aulas-estudiantes
+router.get("/:id_tutor/aulas-estudiantes", getTutorAulasYEstudiantes);
 
 export default router;

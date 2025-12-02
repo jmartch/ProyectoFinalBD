@@ -175,8 +175,7 @@ CREATE TABLE usuario (
   FOREIGN KEY (doc_funcionario) REFERENCES funcionario(doc_funcionario)
     ON DELETE CASCADE
     ON UPDATE CASCADE
-);
-
+)
 -- 13. Tabla MATRICULA
 CREATE TABLE matricula (
   id_aula INT,
