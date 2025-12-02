@@ -4,7 +4,9 @@ import dotenv from 'dotenv';
 
 import { swaggerDocs } from './config/swagger.js';
 import { initializeDatabase } from './config/db.js';
+import { seedInitialUsers } from "./config/seedUsers.js";
 
+import authRoutes from "./routes/AUTH.js";
 import estudianteRoutes from './routes/ESTUDIANTE.js';
 import iedRoutes from './routes/IED.js';
 import notaRoutes from './routes/NOTA.js';
@@ -57,6 +59,7 @@ app.use("/api/aula-tutor", aulaTutorRoutes);
 app.use("/api/programas", programaRoutes);
 app.use("/api/semanas", semanaRoutes);
 app.use('/api/calendar', calendarRoutes);
+app.use("/api/auth", authRoutes);
 
 
 // Health check
@@ -72,7 +75,8 @@ app.use((err, req, res, next) => {
 
 async function start() {
   await initializeDatabase();
-
+  await seedInitialUsers(); 
+  
   const PORT = process.env.PORT || 3000;
 
   swaggerDocs(app, PORT);
