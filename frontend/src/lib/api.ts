@@ -662,7 +662,7 @@ export interface TutorAulaEstudiantes {
 
 // GET /api/tutores/full - Obtener tutores con conteo de aulas y estudiantes
 export async function fetchTutoresFull(): Promise<TutorFull[]> {
-  const res = await fetch(`${API_BASE_URL}/api/tutores/full`);
+  const res = await fetch(`${API_BASE_URL}/api/tutores/`);
   if (!res.ok) {
     throw new Error("Error al obtener tutores completos");
   }
@@ -703,27 +703,49 @@ export async function assignAulaToTutor(input: {
   }
 }
 
-// POST /api/funcionarios/crear-con-tutor - Crear funcionario y opcionalmente tutor
-export async function createFuncionarioFromForm(input: {
+// POST /api/funcionarios - usado por TutorsManager
+export async function createFuncionarioFromForm(data: {
   tipo_doc: string;
   doc: string;
   nombre1: string;
-  nombre2?: string | null;
+  nombre2: string | null;
   apellido1: string;
-  apellido2?: string | null;
+  apellido2: string | null;
   correo: string;
   telefono: string;
-  fecha_contrato: string; // YYYY-MM-DD
+  sexo: "M" | "F";
+  fecha_contrato: string;
   shouldCreateTutor: boolean;
-}): Promise<void> {
-  const res = await fetch(`${API_BASE_URL}/api/funcionarios/crear-con-tutor`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(input),
-  });
+}): Promise<any> {
+  const payload = {
+    doc_funcionario: data.doc,
+    tipo_doc: data.tipo_doc,
+    nombre1: data.nombre1,
+    nombre2: data.nombre2,
+    apellido1: data.apellido1,
+    apellido2: data.apellido2,
+    correo: data.correo,
+    telefono: data.telefono,
+    sexo: data.sexo,
+    fecha_contrato: data.fecha_contrato,
+    shouldCreateTutor: data.shouldCreateTutor,
+  };
 
-  const body = await res.json().catch(() => ({}));
+  const res = await fetch(
+    `${API_BASE_URL}/api/funcionarios/crear-con-tutor`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+    },
+  );
+
   if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
     throw new Error(body.message || "Error al crear funcionario");
   }
+
+  return res.json();
 }

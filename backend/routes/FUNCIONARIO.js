@@ -7,6 +7,7 @@ const router = Router();
 router.get("/", funcionarioController.getAllFuncionarios);
 router.get("/:doc", funcionarioController.getFuncionarioById);
 router.post("/", funcionarioController.createFuncionario);
+router.post("/crear-con-tutor", funcionarioController.createFuncionarioConTutor);
 router.put("/:doc", funcionarioController.updateFuncionario);
 router.delete("/:doc", funcionarioController.deleteFuncionario);
 

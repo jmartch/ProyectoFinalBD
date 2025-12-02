@@ -1,5 +1,8 @@
-// controllers/funcionario.controller.js
+// backend/controllers/FUNCIONARIO.controller.js
+import db from "../config/db.js";
 import FUNCIONARIO from "../models/FUNCIONARIO.model.js";
+
+// ========== GET TODOS ==========
 
 export const getAllFuncionarios = async (req, res) => {
   try {
@@ -32,6 +35,8 @@ export const getFuncionarioById = async (req, res) => {
     });
   }
 };
+
+// ========== CREAR SOLO FUNCIONARIO (SIN TUTOR) ==========
 
 export const createFuncionario = async (req, res) => {
   try {
@@ -158,6 +163,8 @@ export const createFuncionario = async (req, res) => {
     });
   }
 };
+
+// ========== UPDATE / DELETE ==========
 
 export const updateFuncionario = async (req, res) => {
   try {
@@ -323,6 +330,179 @@ export const deleteFuncionario = async (req, res) => {
     }
     res.status(500).json({
       message: "Error al eliminar el funcionario",
+      error: error.message,
+    });
+  }
+};
+
+// ========== NUEVO: CREAR FUNCIONARIO + (OPCIONAL) TUTOR ==========
+
+export const createFuncionarioConTutor = async (req, res) => {
+  try {
+    const {
+      doc_funcionario,
+      tipo_doc,
+      nombre1,
+      nombre2,
+      apellido1,
+      apellido2,
+      correo,
+      telefono,
+      sexo,
+      fecha_contrato,
+      shouldCreateTutor,
+    } = req.body;
+
+    // ---- mismas validaciones que createFuncionario ----
+    if (
+      !doc_funcionario ||
+      !tipo_doc ||
+      !nombre1 ||
+      !apellido1 ||
+      !sexo ||
+      !correo ||
+      !telefono ||
+      !fecha_contrato
+    ) {
+      return res.status(400).json({
+        message:
+          "Faltan campos requeridos: doc_funcionario, tipo_doc, nombre1, apellido1, sexo, correo, telefono, fecha_contrato",
+      });
+    }
+
+    const tiposDocValidos = ["TI", "CC", "CE", "PE"];
+    if (!tiposDocValidos.includes(tipo_doc)) {
+      return res.status(400).json({
+        message:
+          "Tipo de documento inválido. Valores permitidos: TI, CC, CE, PE",
+      });
+    }
+
+    const sexosValidos = ["M", "F"];
+    if (!sexosValidos.includes(sexo)) {
+      return res.status(400).json({
+        message: "Sexo inválido. Valores permitidos: M, F",
+      });
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(correo)) {
+      return res.status(400).json({
+        message: "Correo electrónico inválido",
+      });
+    }
+
+    const telefonoRegex = /^[0-9]{7,15}$/;
+    if (!telefonoRegex.test(telefono)) {
+      return res.status(400).json({
+        message:
+          "Teléfono inválido. Debe contener entre 7 y 15 dígitos",
+      });
+    }
+
+    const fechaRegex = /^\d{4}-\d{2}-\d{2}$/;
+    if (!fechaRegex.test(fecha_contrato)) {
+      return res.status(400).json({
+        message: "Formato de fecha inválido. Use YYYY-MM-DD",
+      });
+    }
+
+    const fechaContratoDate = new Date(fecha_contrato);
+    const hoy = new Date();
+    if (fechaContratoDate > hoy) {
+      return res.status(400).json({
+        message: "La fecha de contrato no puede ser futura",
+      });
+    }
+
+    // ---- transacción: funcionario + tutor ----
+    const conn = await db.getConnection();
+
+    try {
+      await conn.beginTransaction();
+
+      // 1) insertar en funcionario
+      const [resultFuncionario] = await conn.query(
+        `
+        INSERT INTO funcionario (
+          doc_funcionario,
+          tipo_doc,
+          nombre1,
+          nombre2,
+          apellido1,
+          apellido2,
+          sexo,
+          correo,
+          telefono,
+          fecha_contrato
+        )
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `,
+        [
+          doc_funcionario,
+          tipo_doc,
+          nombre1,
+          nombre2,
+          apellido1,
+          apellido2,
+          sexo,
+          correo,
+          telefono,
+          fecha_contrato,
+        ],
+      );
+
+      let id_tutor = null;
+
+      // 2) si debe crear tutor, inserta en tutor
+      if (shouldCreateTutor) {
+        const [resultTutor] = await conn.query(
+          `
+          INSERT INTO tutor (doc_funcionario)
+          VALUES (?)
+        `,
+          [doc_funcionario],
+        );
+        id_tutor = resultTutor.insertId;
+      }
+
+      await conn.commit();
+
+      return res.status(201).json({
+        message: "Funcionario creado exitosamente",
+        data: {
+          doc_funcionario,
+          tipo_doc,
+          nombre1,
+          nombre2,
+          apellido1,
+          apellido2,
+          correo,
+          telefono,
+          sexo,
+          fecha_contrato,
+          isTutor: !!shouldCreateTutor,
+          id_tutor,
+        },
+        affectedRows: resultFuncionario.affectedRows,
+      });
+    } catch (err) {
+      await conn.rollback();
+
+      if (err.code === "ER_DUP_ENTRY") {
+        return res.status(409).json({
+          message: "Ya existe un funcionario con ese documento",
+        });
+      }
+
+      throw err;
+    } finally {
+      conn.release();
+    }
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({
+      message: "Error al crear el funcionario (con tutor opcional)",
       error: error.message,
     });
   }

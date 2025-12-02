@@ -40,11 +40,11 @@ const TutorModel = {
   },
 
   // 🔹 NUEVO: todos los tutores con detalle (funcionario, usuario, aulas, estudiantes)
-  getAllWithDetails: async () => {
-    const [rows] = await db.query(`
-      SELECT 
-        t.id_tutor,
-        rt.doc_funcionario,
+async getAllWithDetails() {
+    const [rows] = await db.query(
+      `
+      SELECT
+        f.doc_funcionario,
         f.tipo_doc,
         f.nombre1,
         f.nombre2,
@@ -54,38 +54,21 @@ const TutorModel = {
         f.correo,
         f.telefono,
         f.fecha_contrato,
-        u.usuario AS username,
-        u.rol,
-        COUNT(DISTINCT at.id_aula) AS aulas_count,
-        COUNT(DISTINCT m.doc_estudiante) AS estudiantes_count
-      FROM tutor t
-      JOIN registro_tutor rt ON rt.id_tutor = t.id_tutor
-      JOIN funcionario f ON f.doc_funcionario = rt.doc_funcionario
-      LEFT JOIN usuario u ON u.doc_funcionario = f.doc_funcionario
-      LEFT JOIN aula_tutor at 
-        ON at.id_tutor = t.id_tutor 
-       AND (at.fecha_fin IS NULL OR at.fecha_fin > CURRENT_DATE())
-      LEFT JOIN matricula m 
-        ON m.id_aula = at.id_aula 
-       AND (m.fecha_fin IS NULL OR m.fecha_fin > CURRENT_DATE())
-      GROUP BY
         t.id_tutor,
-        rt.doc_funcionario,
-        f.tipo_doc,
-        f.nombre1,
-        f.nombre2,
-        f.apellido1,
-        f.apellido2,
-        f.sexo,
-        f.correo,
-        f.telefono,
-        f.fecha_contrato,
-        u.usuario,
-        u.rol
-      ORDER BY f.apellido1, f.nombre1;
-    `);
+        0 AS aulas_count,
+        0 AS estudiantes_count,
+        u.username
+      FROM funcionario f
+      LEFT JOIN tutor t
+        ON t.doc_funcionario = f.doc_funcionario
+      LEFT JOIN usuario u
+        ON u.doc_funcionario = f.doc_funcionario
+      ORDER BY f.nombre1, f.apellido1
+    `,
+    );
     return rows;
   },
+
 
   // 🔹 NUEVO: aulas + estudiantes para un tutor (a partir de doc_funcionario)
   getAulasYEstudiantesByDocFuncionario: async (doc_funcionario) => {

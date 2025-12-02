@@ -67,7 +67,7 @@ export function TutorsManager() {
   const [isCredentialsDialogOpen, setIsCredentialsDialogOpen] =
     useState(false);
 
-  // Lista de tutores desde backend
+  // Lista de tutores/personal desde backend
   const [tutores, setTutores] = useState<TutorFull[]>([]);
   const [loadingTutores, setLoadingTutores] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -79,6 +79,7 @@ export function TutorsManager() {
   const [docNumber, setDocNumber] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
+  const [sex, setSex] = useState<string>(""); // M / F
   const [role, setRole] = useState<string>("TUTOR"); // TUTOR / ADMINISTRATIVO
   const [hiredDate, setHiredDate] = useState<string>("");
 
@@ -141,6 +142,18 @@ export function TutorsManager() {
     return partes;
   };
 
+  // Helper para rol inferido según aulas/estudiantes
+  // Helper para rol inferido según si tiene registro en la tabla TUTOR
+  const getRol = (t: TutorFull) =>
+    t.id_tutor ? "Tutor" : "Administrativo";
+
+
+  const totalTutores = tutores.filter((t) => getRol(t) === "Tutor").length;
+  const totalAdministrativos = tutores.filter(
+    (t) => getRol(t) === "Administrativo",
+  ).length;
+
+
   // ================== Contratar nuevo personal ==================
   const handleSubmitNuevoPersonal = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -153,7 +166,8 @@ export function TutorsManager() {
       !docNumber.trim() ||
       !email.trim() ||
       !phone.trim() ||
-      !hiredDate
+      !hiredDate ||
+      !sex
     ) {
       setError("Por favor complete todos los campos obligatorios.");
       return;
@@ -175,11 +189,12 @@ export function TutorsManager() {
         apellido2,
         correo: email,
         telefono: phone,
+        sexo: sex as "M" | "F",
         fecha_contrato: hiredDate,
         shouldCreateTutor: role === "TUTOR",
       });
 
-      // Volvemos a cargar la lista de tutores
+      // Volvemos a cargar la lista de tutores/personal
       const data = await fetchTutoresFull();
       setTutores(data);
 
@@ -190,6 +205,7 @@ export function TutorsManager() {
       setDocNumber("");
       setEmail("");
       setPhone("");
+      setSex("");
       setRole("TUTOR");
       setHiredDate("");
 
@@ -409,6 +425,25 @@ export function TutorsManager() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
+                  <Label htmlFor="sex">Sexo</Label>
+                  <Select
+                    value={sex}
+                    onValueChange={setSex}
+                  >
+                    <SelectTrigger id="sex">
+                      <SelectValue placeholder="Seleccione sexo" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="F">
+                        Femenino
+                      </SelectItem>
+                      <SelectItem value="M">
+                        Masculino
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
                   <Label htmlFor="role">Rol/Perfil</Label>
                   <Select
                     value={role}
@@ -427,20 +462,21 @@ export function TutorsManager() {
                     </SelectContent>
                   </Select>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="hiredDate">
-                    Fecha de Contratación
-                  </Label>
-                  <Input
-                    id="hiredDate"
-                    type="date"
-                    required
-                    value={hiredDate}
-                    onChange={(e) =>
-                      setHiredDate(e.target.value)
-                    }
-                  />
-                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="hiredDate">
+                  Fecha de Contratación
+                </Label>
+                <Input
+                  id="hiredDate"
+                  type="date"
+                  required
+                  value={hiredDate}
+                  onChange={(e) =>
+                    setHiredDate(e.target.value)
+                  }
+                />
               </div>
 
               <div className="flex justify-end gap-2 pt-4">
@@ -472,14 +508,14 @@ export function TutorsManager() {
 
         {/* ================== TAB: PERSONAL DEL PROGRAMA ================== */}
         <TabsContent value="tutors" className="space-y-6">
-          {/* Tutors Table */}
+          {/* Tabla de Personal */}
           <Card>
             <CardHeader>
               <CardTitle>Personal Contratado</CardTitle>
               <CardDescription>
                 {loadingTutores
                   ? "Cargando tutores..."
-                  : `${tutores.length} tutores activos`}
+                  : `${tutores.length} personas registradas`}
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -488,12 +524,11 @@ export function TutorsManager() {
                   <TableRow>
                     <TableHead>Nombre Completo</TableHead>
                     <TableHead>Documento</TableHead>
+                    <TableHead>Sexo</TableHead>
                     <TableHead>Email</TableHead>
                     <TableHead>Teléfono</TableHead>
-                    <TableHead>Aulas Asignadas</TableHead>
-                    <TableHead>Estudiantes a cargo</TableHead>
                     <TableHead>Fecha Contratación</TableHead>
-                    <TableHead>Estado</TableHead>
+                    <TableHead>Rol</TableHead>
                     <TableHead>Acciones</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -511,53 +546,52 @@ export function TutorsManager() {
                           </div>
                         </div>
                       </TableCell>
+                      <TableCell>{tutor.sexo}</TableCell>
                       <TableCell>{tutor.correo}</TableCell>
                       <TableCell>{tutor.telefono}</TableCell>
                       <TableCell>
-                        <Badge variant="outline">
-                          {tutor.aulas_count} aulas
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant="outline">
-                          {tutor.estudiantes_count} estudiantes
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
                         {tutor.fecha_contrato
                           ? new Date(
-                              tutor.fecha_contrato,
-                            ).toLocaleDateString("es-CO")
+                            tutor.fecha_contrato,
+                          ).toLocaleDateString("es-CO")
                           : "-"}
                       </TableCell>
                       <TableCell>
-                        <Badge variant="default">
-                          Activo
+                        <Badge variant="outline">
+                          {getRol(tutor)}
                         </Badge>
                       </TableCell>
                       <TableCell>
-                        <div className="flex flex-col gap-1">
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() =>
-                              handleOpenAulasDialog(tutor)
-                            }
-                          >
-                            <Users className="w-4 h-4 mr-1" />
-                            Ver aulas / estudiantes
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() =>
-                              handleOpenAssignAulaDialog(tutor)
-                            }
-                          >
-                            <School className="w-4 h-4 mr-1" />
-                            Asignar aula
-                          </Button>
-                        </div>
+                        {getRol(tutor) === "Tutor" ? (
+                          <div className="flex flex-col gap-1">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() =>
+                                handleOpenAulasDialog(tutor)
+                              }
+                            >
+                              <Users className="w-4 h-4 mr-1" />
+                              Ver aulas / estudiantes
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() =>
+                                handleOpenAssignAulaDialog(
+                                  tutor,
+                                )
+                              }
+                            >
+                              <School className="w-4 h-4 mr-1" />
+                              Asignar aula
+                            </Button>
+                          </div>
+                        ) : (
+                          <span className="text-xs text-gray-500">
+                            No aplica
+                          </span>
+                        )}
                       </TableCell>
                     </TableRow>
                   ))}
@@ -567,7 +601,7 @@ export function TutorsManager() {
               {!loadingTutores && tutores.length === 0 && (
                 <div className="text-center py-12 text-gray-500">
                   <UserCog className="w-16 h-16 mx-auto mb-4 opacity-30" />
-                  <p>No hay tutores registrados</p>
+                  <p>No hay personal registrado</p>
                 </div>
               )}
             </CardContent>
@@ -582,14 +616,16 @@ export function TutorsManager() {
               <div className="grid grid-cols-3 gap-4">
                 <div className="text-center p-4 bg-blue-50 rounded-lg">
                   <div className="text-2xl">
-                    {tutores.length}
+                    {totalTutores}
                   </div>
                   <p className="text-sm text-gray-600 mt-1">
-                    Tutores Activos
+                    Tutores
                   </p>
                 </div>
                 <div className="text-center p-4 bg-green-50 rounded-lg">
-                  <div className="text-2xl">0</div>
+                  <div className="text-2xl">
+                    {totalAdministrativos}
+                  </div>
                   <p className="text-sm text-gray-600 mt-1">
                     Administrativos
                   </p>
@@ -687,7 +723,7 @@ export function TutorsManager() {
             </CardContent>
           </Card>
 
-          {/* Credentials Dialog (por ahora solo front, sin pegar aún al backend de usuarios) */}
+          {/* Credentials Dialog */}
           <Dialog
             open={isCredentialsDialogOpen}
             onOpenChange={setIsCredentialsDialogOpen}
@@ -794,8 +830,8 @@ export function TutorsManager() {
             <DialogDescription>
               {selectedTutorForAulas
                 ? `Tutor: ${getNombreCompleto(
-                    selectedTutorForAulas,
-                  )}`
+                  selectedTutorForAulas,
+                )}`
                 : "Seleccione un tutor"}
             </DialogDescription>
           </DialogHeader>
@@ -909,8 +945,8 @@ export function TutorsManager() {
             <DialogDescription>
               {selectedTutorForAssign
                 ? `Tutor: ${getNombreCompleto(
-                    selectedTutorForAssign,
-                  )}`
+                  selectedTutorForAssign,
+                )}`
                 : "Seleccione un tutor"}
             </DialogDescription>
           </DialogHeader>
